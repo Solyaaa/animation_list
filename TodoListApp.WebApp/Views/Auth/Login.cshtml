@@ -1,0 +1,34 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model TodoListApp.WebApp.Models.LoginVm
+
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_AuthLayout";
+}
+<section class="form">
+    <h1>Welcome back</h1>
+    <p class="sub">Sign in to manage your tasks</p>
+
+    @if (TempData["Error"] is string err)
+    {
+        <div class="alert">@err</div>
+    }
+
+    <form method="post" asp-action="Login">
+        <div class="fi">
+            <input name="email" type="email" placeholder="Email" required />
+        </div>
+        <div class="fi">
+            <input name="password" type="password" placeholder="Password" required />
+        </div>
+        <button class="btn" type="submit">
+            <span>Sign in</span>
+            <svg viewBox="0 0 24 24" class="arrow"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+    </form>
+
+    <div class="switch">
+        No account?
+        <a asp-controller="Auth" asp-action="Register">Create one</a>
+    </div>
+</section>

@@ -1,0 +1,33 @@
+@{
+    var listId = (int)ViewBag.ListId;
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0 text-dark">
+            <i class="bi bi-plus-circle me-2"></i>Add New Task
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="/Lists/AddTask" class="row g-3">
+            <input type="hidden" name="listId" value="@listId"/>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Title</label>
+                <input name="Title" class="form-control" placeholder="Enter task title" required />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Description</label>
+                <input name="Description" class="form-control" placeholder="Enter description" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Due date</label>
+                <input name="DueDate" type="date" class="form-control" />
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary px-4" type="submit">
+                    <i class="bi bi-plus-lg me-2"></i>Add Task
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

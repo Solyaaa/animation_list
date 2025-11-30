@@ -1,0 +1,192 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model TodoListApp.WebApp.Models.UpdateTaskDto
+@{
+    ViewData["Title"] = "Edit task";
+    var taskId = (int)ViewBag.TaskId;
+    var listId = (int)ViewBag.ListId;
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card border-0 shadow-lg task-edit-card">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="h4 mb-0 text-primary task-edit-title">Edit Task</h2>
+                        <a class="btn btn-outline-secondary task-back-btn"
+                           asp-controller="Tasks" asp-action="Details" asp-route-id="@taskId">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Task
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="vstack gap-4">
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="task-input-group">
+                                    <label asp-for="Title" class="form-label fw-semibold"></label>
+                                    <input asp-for="Title" class="form-control task-title-input" required
+                                           placeholder="Enter task title..." />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="task-input-group">
+                                    <label asp-for="DueDate" class="form-label fw-semibold">Due date</label>
+                                    <input asp-for="DueDate" type="date" class="form-control task-date-input" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="task-input-group">
+                            <label asp-for="Description" class="form-label fw-semibold"></label>
+                            <textarea asp-for="Description" class="form-control task-desc-input"
+                                      rows="3" placeholder="Enter task description..."></textarea>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="task-input-group">
+                                    <label asp-for="Status" class="form-label fw-semibold"></label>
+                                    <select asp-for="Status" class="form-select task-status-select">
+                                        <option value="0">Pending</option>
+                                        <option value="1">InProgress</option>
+                                        <option value="2">Done</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="task-input-group">
+                                    <label asp-for="AssignedUserId" class="form-label fw-semibold"></label>
+                                    <input asp-for="AssignedUserId" class="form-control task-user-input"
+                                           placeholder="Enter user ID..." />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-3 pt-2 task-buttons">
+                            <button class="btn btn-primary px-5 task-save-btn" type="submit">
+                                <i class="bi bi-check-lg me-2"></i>Save Changes
+                            </button>
+                            <a class="btn btn-outline-secondary px-4 task-cancel-btn"
+                               asp-controller="Tasks" asp-action="Details" asp-route-id="@taskId">
+                                Cancel
+                            </a>
+                            <a class="btn btn-outline-info px-4 task-list-btn"
+                               asp-controller="Lists" asp-action="Tasks" asp-route-id="@listId">
+                                Back to List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.task-edit-card {
+    border-radius: 1rem;
+    background: #fff;
+}
+
+.task-edit-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.task-input-group .form-control, .task-input-group .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.task-input-group .form-control:focus, .task-input-group .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    transform: translateY(-2px);
+}
+
+.task-back-btn, .task-save-btn, .task-cancel-btn, .task-list-btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.task-back-btn:hover {
+    transform: translateX(-3px);
+}
+
+.task-save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.task-cancel-btn:hover {
+    transform: translateY(-2px);
+    border-color: #6c757d;
+}
+
+.task-list-btn:hover {
+    transform: translateY(-2px);
+    border-color: #0dcaf0;
+    color: #0dcaf0;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Input focus effects
+    const inputs = document.querySelectorAll('.task-title-input, .task-desc-input, .task-date-input, .task-user-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 5px 15px rgba(13, 110, 253, 0.3)';
+        });
+        input.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Select focus effect
+    const select = document.querySelector('.task-status-select');
+    if (select) {
+        select.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 5px 15px rgba(13, 110, 253, 0.3)';
+        });
+        select.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+
+    // Save button animation
+    const saveBtn = document.querySelector('.task-save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        saveBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+
+    // Back button hover effect
+    const backBtn = document.querySelector('.task-back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateX(-3px)';
+        });
+        backBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateX(0)';
+        });
+    }
+});
+</script>

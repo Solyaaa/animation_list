@@ -1,0 +1,178 @@
+@model IReadOnlyList<TodoListApp.WebApp.Models.TaskItemDto>
+@{
+    ViewData["Title"] = "Tasks by Tag";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 tag-header">
+        <h2 class="mb-0 text-primary tag-title">Tasks by Tag</h2>
+        <a class="btn btn-outline-secondary tag-back-btn" href="/Tags">
+            <i class="bi bi-arrow-left me-2"></i>Back to Tags
+        </a>
+    </div>
+
+    <div class="card shadow-sm tag-table-card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="ps-4">Task Title</th>
+                            <th>List ID</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @{
+                        int taskIndex = 0;
+                    }
+                    @foreach (var t in Model)
+                    {
+                        taskIndex++;
+                        <tr class="tag-task-row" style="opacity: 0; transform: translateX(-20px);">
+                            <td class="ps-4">
+                                <div class="fw-semibold task-title-hover">@t.Title</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info list-id-badge">@t.TodoListId</span>
+                            </td>
+                            <td>
+                                <span class="badge @(t.DueDate?.Date < DateTime.Now.Date ? "bg-warning" : "bg-secondary") due-date-badge">
+                                    @(t.DueDate?.ToString("yyyy-MM-dd") ?? "No due date")
+                                </span>
+                            </td>
+                            <td>
+                                @{
+                                    var statusClass = t.Status.ToString() switch
+                                    {
+                                        "Pending" => "bg-secondary",
+                                        "InProgress" => "bg-primary",
+                                        "Done" => "bg-success",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @statusClass status-badge">@t.Status</span>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tag-header {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 1rem;
+}
+
+.tag-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.tag-table-card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.tag-back-btn {
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.tag-back-btn:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.task-title-hover {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.task-title-hover:hover {
+    color: #0d6efd;
+    transform: translateX(5px);
+}
+
+.list-id-badge, .due-date-badge, .status-badge {
+    transition: all 0.3s ease;
+}
+
+.list-id-badge:hover, .due-date-badge:hover, .status-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.tag-task-row {
+    transition: all 0.5s ease;
+}
+
+.table-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+}
+
+.table-primary th {
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate rows
+    const rows = document.querySelectorAll('.tag-task-row');
+    rows.forEach((row, index) => {
+        setTimeout(() => {
+            row.style.opacity = '1';
+            row.style.transform = 'translateX(0)';
+        }, 100 * index);
+    });
+
+    // Add hover effects
+    const taskTitles = document.querySelectorAll('.task-title-hover');
+    taskTitles.forEach(title => {
+        title.addEventListener('mouseenter', function() {
+            this.style.color = '#0d6efd';
+            this.style.transform = 'translateX(5px)';
+        });
+        title.addEventListener('mouseleave', function() {
+            this.style.color = '';
+            this.style.transform = 'translateX(0)';
+        });
+    });
+
+    // Animate badges
+    const badges = document.querySelectorAll('.list-id-badge, .due-date-badge, .status-badge');
+    badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.05)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Pulse animation for warning badges (overdue)
+    const warningBadges = document.querySelectorAll('.bg-warning');
+    warningBadges.forEach(badge => {
+        setInterval(() => {
+            badge.style.transform = 'scale(1.1)';
+            setTimeout(() => {
+                badge.style.transform = 'scale(1)';
+            }, 500);
+        }, 2000);
+    });
+});
+</script>

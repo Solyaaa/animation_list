@@ -1,0 +1,4 @@
+@TodoListApp.WebApi_HostAddress = https://127.0.0.1:7266
+
+GET {{TodoListApp.WebApi_HostAddress}}/swagger/
+Accept: application/json

@@ -1,0 +1,60 @@
+:root{
+  --bg:#0b1020; --card:#111933; --glass:rgba(255,255,255,.06);
+  --text:#e6e9f2; --muted:#a9b0c7; --accent:#7c5cff; --accent2:#00e0ff;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 Inter,system-ui,Segoe UI,Arial}
+.bg{position:fixed;inset:0;overflow:hidden;z-index:-1}
+.bg .gradient{
+  position:absolute;inset:-20%;
+  background: radial-gradient(60vmax 60vmax at 20% 10%, rgba(124,92,255,.25), transparent 60%),
+              radial-gradient(50vmax 50vmax at 90% 80%, rgba(0,224,255,.20), transparent 60%);
+  filter: blur(40px); animation: float 18s ease-in-out infinite alternate;
+}
+.bg .dots{
+  position:absolute; inset:0;
+  background-image: radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask: linear-gradient(#000, transparent 80%);
+}
+@keyframes float{
+  from{transform:translateY(-2%)}
+  to{transform:translateY(2%)}
+}
+.card{
+  max-width: 380px; margin: clamp(40px,8vh,100px) auto; padding:28px;
+  background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.04));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.04);
+  backdrop-filter: blur(10px);
+}
+.form h1{margin:8px 0 4px; font-size: 28px; letter-spacing:.2px}
+.form .sub{margin:0 0 18px; color:var(--muted)}
+.alert{
+  background: rgba(255,83,112,.1); color:#ff6b86; padding:10px 12px;
+  border:1px solid rgba(255,83,112,.25); border-radius:12px; margin-bottom:12px
+}
+.fi{margin:10px 0 14px}
+.fi input{
+  width:100%; background: var(--glass); border:1px solid rgba(255,255,255,.08);
+  border-radius:12px; padding:12px 14px; color:var(--text); outline:none;
+  transition: border .2s, box-shadow .2s, transform .15s ease;
+}
+.fi input:focus{
+  border-color: color-mix(in oklab, var(--accent) 50%, white 15%);
+  box-shadow: 0 0 0 6px rgba(124,92,255,.12);
+  transform: translateY(-1px);
+}
+.btn{
+  width:100%; display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border:none; color:white; font-weight:600; padding:12px 16px; border-radius:12px; cursor:pointer;
+  box-shadow: 0 10px 25px rgba(124,92,255,.35); transition: transform .12s ease, box-shadow .2s ease;
+}
+.btn:hover{ transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,224,255,.32) }
+.btn:active{ transform: translateY(0) }
+.btn .arrow{width:20px;height:20px; fill:none; stroke:white; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.switch{margin-top:14px; color:var(--muted); font-size:14px}
+.switch a{ color: var(--accent2); text-decoration:none; border-bottom:1px dashed transparent; transition: .2s }
+.switch a:hover{ border-color: var(--accent2) }

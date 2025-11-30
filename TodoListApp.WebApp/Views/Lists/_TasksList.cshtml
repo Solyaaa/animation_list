@@ -1,0 +1,120 @@
+@model IReadOnlyList<TodoListApp.WebApp.Models.TaskItemDto>
+@using TodoListApp.WebApp.Models
+@using TaskStatus = TodoListApp.WebApp.Models.TaskStatus
+@{
+    var listId = ViewBag.ListId is int v ? v
+                 : (Model != null && Model.Count > 0 ? Model[0].TodoListId : 0);
+    bool IsOverdue(TaskItemDto t) =>
+        t.DueDate.HasValue && t.DueDate.Value.Date < DateTime.UtcNow.Date && t.Status != (TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Done;
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th class="ps-4" style="width:38%">Title</th>
+                        <th style="width:12%">Due</th>
+                        <th style="width:20%">Status</th>
+                        <th style="width:20%">Tags</th>
+                        <th class="text-end pe-4" style="width:10%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @if (Model != null)
+                {
+                    foreach (var t in Model)
+                    {
+                        var rowClass = IsOverdue(t) ? "overdue-task task-item" : "task-item";
+                        <tr class="@rowClass">
+                            <td class="ps-4">
+                                <div class="fw-semibold text-dark">@t.Title</div>
+                                @if (!string.IsNullOrWhiteSpace(t.Description))
+                                {
+                                    <div class="text-muted small mt-1">@t.Description</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @(IsOverdue(t) ? "bg-danger" : "bg-secondary")">
+                                    @(t.DueDate?.ToString("yyyy-MM-dd") ?? "-")
+                                </span>
+                            </td>
+                            <td>
+                                <form method="post" asp-controller="Lists" asp-action="SetStatus" class="d-flex gap-2 align-items-center">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="listId" value="@listId" />
+                                    <input type="hidden" name="taskId" value="@t.Id" />
+                                    <select name="status" class="form-select form-select-sm status-select">
+                                        <option value="0" selected="@(t.Status == (TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Pending)">Pending</option>
+                                        <option value="1" selected="@(t.Status == (TodoListApp.Domain.Entities.TaskStatus)TaskStatus.InProgress)">In Progress</option>
+                                        <option value="2" selected="@(t.Status == (TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Done)">Done</option>
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary" type="submit">Update</button>
+                                </form>
+                            </td>
+                            <td>
+                                <div class="mb-2">
+                                    @if (t.Tags != null && t.Tags.Count > 0)
+                                    {
+                                        foreach (var tag in t.Tags)
+                                        {
+                                            <form method="post" asp-controller="Lists" asp-action="RemoveTag" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="listId" value="@listId" />
+                                                <input type="hidden" name="taskId" value="@t.Id" />
+                                                <input type="hidden" name="tagId" value="@tag.Id" />
+                                                <span class="badge bg-primary me-1 mb-1 d-inline-flex align-items-center">
+                                                    @tag.Name
+                                                    <button class="btn btn-link btn-sm p-0 ms-1 text-light border-0"
+                                                            type="submit" title="Remove tag">
+                                                        <i class="bi bi-x"></i>
+                                                    </button>
+                                                </span>
+                                            </form>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">No tags</span>
+                                    }
+                                </div>
+                                <form method="post" asp-controller="Lists" asp-action="AddTag" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="listId" value="@listId" />
+                                    <input type="hidden" name="taskId" value="@t.Id" />
+                                    <input class="form-control form-control-sm" name="name" placeholder="Add tag..." />
+                                    <button class="btn btn-sm btn-success" type="submit">Add</button>
+                                </form>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a class="btn btn-sm btn-outline-info"
+                                   asp-controller="Tasks" asp-action="Details" asp-route-id="@t.Id">
+                                    <i class="bi bi-eye me-1"></i>Details
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-select {
+    min-width: 120px;
+}
+
+.table-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+}
+
+.table-primary th {
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+</style>

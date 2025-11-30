@@ -1,0 +1,48 @@
+@model IReadOnlyList<TodoListApp.WebApp.Models.TaskItemDto>
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TodoListApp.WebApp.Models
+@using TaskStatus = TodoListApp.WebApp.Models.TaskStatus
+
+@{
+    var listId = ViewBag.ListId is int v ? v
+        : (Model != null && Model.Count > 0 ? Model[0].TodoListId : 0);
+
+    ViewData["Title"] = $"Tasks in List #{listId}";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="tasks-header mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 text-primary mb-1">Tasks in List #@listId</h1>
+                <p class="text-muted mb-0">@Model.Count tasks total</p>
+            </div>
+            <a class="btn btn-outline-secondary" asp-controller="Lists" asp-action="Index">
+                <i class="bi bi-arrow-left me-2"></i>Back to Lists
+            </a>
+        </div>
+    </div>
+
+    <!-- Tasks Table -->
+    <partial name="_TasksList" model="Model" />
+
+    <!-- Add Task Form -->
+    <partial name="_CreateTaskForm" />
+</div>
+
+<style>
+.tasks-header {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1.5rem;
+}
+
+.overdue-task {
+    background: #fff5f5 !important;
+    border-left: 4px solid #dc3545;
+}
+
+.task-item:hover {
+    background-color: #f8f9fa !important;
+}
+</style>

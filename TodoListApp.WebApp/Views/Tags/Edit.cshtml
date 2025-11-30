@@ -1,0 +1,118 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model TodoListApp.WebApp.Models.TagEditVm
+@{
+    ViewData["Title"] = "Rename tag";
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm tag-edit-card">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <a href="/Tags" class="btn btn-sm btn-outline-secondary me-3 tag-back-btn">
+                            <i class="bi bi-arrow-left"></i>
+                        </a>
+                        <h4 class="card-title mb-0 text-primary tag-edit-title">Rename Tag</h4>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="vstack gap-4">
+                        <input type="hidden" name="Id" value="@Model.Id" />
+                        <div class="tag-input-group">
+                            <label class="form-label fw-semibold">New Tag Name</label>
+                            <input class="form-control tag-name-input" name="Name" value="@Model.Name"
+                                   placeholder="Enter new tag name..." required />
+                        </div>
+                        <div class="d-flex gap-3 pt-2 tag-buttons">
+                            <button class="btn btn-primary px-4 tag-save-btn" type="submit">
+                                <i class="bi bi-check-lg me-2"></i>Save Changes
+                            </button>
+                            <a class="btn btn-outline-secondary px-4 tag-cancel-btn" href="/Tags">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.tag-edit-card {
+    border-radius: 1rem;
+}
+
+.tag-edit-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.tag-input-group .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.tag-input-group .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    transform: translateY(-2px);
+}
+
+.tag-back-btn, .tag-save-btn, .tag-cancel-btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.tag-back-btn:hover {
+    transform: translateX(-3px);
+}
+
+.tag-save-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.tag-cancel-btn:hover {
+    transform: translateY(-2px);
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Input focus effect
+    const tagInput = document.querySelector('.tag-name-input');
+    if (tagInput) {
+        tagInput.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 5px 15px rgba(13, 110, 253, 0.3)';
+        });
+        tagInput.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+
+    // Save button animation
+    const saveBtn = document.querySelector('.tag-save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        saveBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+});
+</script>

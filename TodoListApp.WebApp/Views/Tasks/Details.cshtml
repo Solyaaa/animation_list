@@ -1,0 +1,289 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model TodoListApp.WebApp.Models.TaskItemDto
+@{
+    var comments = ViewBag.Comments as List<TodoListApp.WebApp.Models.CommentDto> ?? new();
+}
+
+<div class="container-fluid py-4">
+    <!-- Task Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 task-details-header">
+        <div>
+            <h1 class="h3 text-primary task-title">@Model.Title</h1>
+            <p class="text-muted mb-0 task-description">@Model.Description</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary task-edit-btn"
+               asp-controller="Tasks" asp-action="Edit" asp-route-id="@Model.Id">
+                <i class="bi bi-pencil me-2"></i>Edit Task
+            </a>
+            <a class="btn btn-outline-secondary task-back-btn"
+               asp-controller="Lists" asp-action="Tasks" asp-route-id="@Model.TodoListId">
+                <i class="bi bi-arrow-left me-2"></i>Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Task Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm task-info-card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Task Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="task-info-item">
+                        <strong>Status:</strong>
+                        <span class="badge @GetStatusBadgeClass(Model.Status) task-status-badge">@Model.Status</span>
+                    </div>
+                    <div class="task-info-item">
+                        <strong>Due Date:</strong>
+                        <span class="task-due-date">@(Model.DueDate?.ToString("yyyy-MM-dd") ?? "No due date")</span>
+                    </div>
+                    <div class="task-info-item">
+                        <strong>List ID:</strong>
+                        <span class="task-list-id">@Model.TodoListId</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm task-tags-card">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Tags</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.Tags?.Count > 0)
+                    {
+                        foreach (var tag in Model.Tags)
+                        {
+                            <span class="badge bg-primary me-2 mb-2 task-tag-badge">@tag.Name</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted">No tags assigned</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comments Section -->
+    <div class="card border-0 shadow-sm task-comments-card">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Comments</h5>
+        </div>
+        <div class="card-body">
+            <!-- Add Comment Form -->
+            <form asp-action="AddComment" method="post" class="mb-4 comment-form">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="taskId" value="@Model.Id" />
+                <div class="input-group">
+                    <input class="form-control comment-input" type="text" name="text"
+                           placeholder="Write a comment..." required />
+                    <button class="btn btn-primary comment-submit-btn" type="submit">
+                        <i class="bi bi-send me-2"></i>Add Comment
+                    </button>
+                </div>
+            </form>
+
+            <!-- Comments List -->
+            <div class="comments-list">
+                @foreach (var c in comments)
+                {
+                    <div class="card comment-card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <small class="text-muted comment-date">
+                                    <i class="bi bi-clock me-1"></i>@c.CreatedAt?.ToString("yyyy-MM-dd HH:mm")
+                                </small>
+                            </div>
+                            <p class="card-text comment-text">@c.Text</p>
+                            <div class="comment-actions">
+                                <!-- Edit Comment -->
+                                <form asp-action="EditComment" method="post" class="d-inline me-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@Model.Id" />
+                                    <input type="hidden" name="commentId" value="@c.Id" />
+                                    <div class="input-group input-group-sm">
+                                        <input class="form-control form-control-sm comment-edit-input"
+                                               type="text" name="text" value="@c.Text" />
+                                        <button class="btn btn-outline-primary btn-sm comment-save-btn" type="submit">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Delete Comment -->
+                                <form asp-action="DeleteComment" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="taskId" value="@Model.Id" />
+                                    <input type="hidden" name="commentId" value="@c.Id" />
+                                    <button class="btn btn-outline-danger btn-sm comment-delete-btn"
+                                            type="submit" onclick="return confirm('Delete this comment?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(TodoListApp.Domain.Entities.TaskStatus status)
+    {
+        return status switch
+        {
+            TodoListApp.Domain.Entities.TaskStatus.Pending => "bg-warning",
+            TodoListApp.Domain.Entities.TaskStatus.InProgress => "bg-primary",
+            TodoListApp.Domain.Entities.TaskStatus.Done => "bg-success",
+            _ => "bg-secondary"
+        };
+    }
+}
+
+<style>
+.task-details-header {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 1rem;
+}
+
+.task-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.task-info-card, .task-tags-card, .task-comments-card {
+    border-radius: 0.75rem;
+}
+
+.task-info-item {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.task-info-item:last-child {
+    border-bottom: none;
+}
+
+.task-status-badge, .task-tag-badge {
+    transition: all 0.3s ease;
+}
+
+.task-status-badge:hover, .task-tag-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.comment-card {
+    border-radius: 0.5rem;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.comment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.comment-input, .comment-edit-input {
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.comment-input:focus, .comment-edit-input:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.task-back-btn, .task-edit-btn, .comment-submit-btn, .comment-save-btn, .comment-delete-btn {
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.task-back-btn:hover {
+    transform: translateX(-3px);
+}
+
+.task-edit-btn:hover, .comment-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.comment-save-btn:hover {
+    transform: scale(1.1);
+}
+
+.comment-delete-btn:hover {
+    transform: scale(1.1);
+    background: #dc3545;
+    color: white;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate status and tag badges
+    const badges = document.querySelectorAll('.task-status-badge, .task-tag-badge');
+    badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.05)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Comment card hover effects
+    const commentCards = document.querySelectorAll('.comment-card');
+    commentCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Input focus effects
+    const inputs = document.querySelectorAll('.comment-input, .comment-edit-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-1px)';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(13, 110, 253, 0.25)';
+        });
+        input.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Button hover effects
+    const buttons = document.querySelectorAll('.task-back-btn, .task-edit-btn, .comment-submit-btn');
+    buttons.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            if (this.classList.contains('task-back-btn')) {
+                this.style.transform = 'translateX(-3px)';
+            } else {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            }
+        });
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>

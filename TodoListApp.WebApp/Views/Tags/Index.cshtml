@@ -1,0 +1,263 @@
+@model TodoListApp.WebApp.Models.TagDtoPagedResponse
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TodoListApp.WebApp.Models
+@{
+    ViewData["Title"] = "Tags";
+    var total = Model?.TotalCount ?? 0;
+    var pg   = Model?.Page     > 0 ? Model.Page     : 1;
+    var psz  = Model?.PageSize > 0 ? Model.PageSize : 20;
+    var pages = (int)Math.Ceiling((double)Math.Max(0, total) / Math.Max(1, psz));
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 tag-header">
+        <h2 class="mb-0 text-primary tag-main-title">Tags Management</h2>
+        <form method="get" class="d-flex align-items-center gap-2 tag-page-size-form">
+            <label class="form-label mb-0 fw-semibold">Page size</label>
+            <input class="form-control form-control-sm tag-page-input" type="number" name="pageSize" value="@psz" min="1" max="200" style="width:90px" />
+            <input type="hidden" name="page" value="1" />
+            <button class="btn btn-sm btn-primary tag-apply-btn" type="submit">Apply</button>
+        </form>
+    </div>
+
+    @if (total == 0)
+    {
+        <div class="alert alert-info tag-empty-alert">
+            <i class="bi bi-info-circle me-2"></i>
+            No tags yet. Add a tag to any task on the
+            <a asp-controller="Lists" asp-action="Index" class="alert-link">Tasks page</a>.
+        </div>
+    }
+
+    <!-- Tags Table -->
+    <div class="card shadow-sm tag-table-card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="ps-4">Tag Name</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @if (Model?.Items != null)
+                    {
+                        int tagIndex = 0;
+                        foreach (var tag in Model.Items)
+                        {
+                            tagIndex++;
+                            <tr class="tag-row" style="opacity: 0; transform: translateX(-20px);">
+                                <td class="ps-4">
+                                    <span class="badge bg-primary tag-name-badge">@tag.Name</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group btn-group-sm tag-action-buttons">
+                                        <a class="btn btn-outline-info tag-view-btn"
+                                           asp-controller="Tags" asp-action="By" asp-route-id="@tag.Id">
+                                            <i class="bi bi-eye me-1"></i>View tasks
+                                        </a>
+                                        <a class="btn btn-outline-primary tag-edit-btn"
+                                           asp-controller="Tags" asp-action="Edit"
+                                           asp-route-id="@tag.Id" asp-route-name="@tag.Name"
+                                           asp-route-page="@pg" asp-route-pageSize="@psz">
+                                            <i class="bi bi-pencil me-1"></i>Rename
+                                        </a>
+                                        <form method="post"
+                                              asp-controller="Tags" asp-action="Delete"
+                                              asp-route-id="@tag.Id" asp-route-page="@pg" asp-route-pageSize="@psz"
+                                              class="d-inline js-delete-tag" data-name="@tag.Name">
+                                            @Html.AntiForgeryToken()
+                                            <button class="btn btn-outline-danger tag-delete-btn" type="submit">
+                                                <i class="bi bi-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (pages > 1)
+    {
+        <nav class="mt-4 tag-pagination">
+            <ul class="pagination justify-content-center">
+                @for (int p = 1; p <= pages; p++)
+                {
+                    var active = p == pg ? "active" : "";
+                    <li class="page-item @active">
+                        <a class="page-link tag-page-link"
+                           asp-controller="Tags" asp-action="Index"
+                           asp-route-page="@p" asp-route-pageSize="@psz">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>
+
+<style>
+.tag-header {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 1rem;
+}
+
+.tag-main-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.tag-table-card {
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.tag-empty-alert {
+    border-radius: 0.5rem;
+    border: none;
+    background: #e7f3ff;
+    color: #0a58ca;
+}
+
+.tag-name-badge {
+    font-size: 0.9rem;
+    padding: 0.5em 0.8em;
+    transition: all 0.3s ease;
+}
+
+.tag-name-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.tag-action-buttons .btn {
+    border-radius: 0.25rem;
+    margin-left: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.tag-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+}
+
+.tag-edit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+}
+
+.tag-delete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.tag-page-input {
+    transition: all 0.3s ease;
+}
+
+.tag-page-input:focus {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.tag-apply-btn {
+    transition: all 0.3s ease;
+}
+
+.tag-apply-btn:hover {
+    transform: translateY(-1px);
+}
+
+.tag-pagination .page-link {
+    transition: all 0.3s ease;
+}
+
+.tag-pagination .page-link:hover {
+    transform: translateY(-2px);
+}
+
+.tag-row {
+    transition: all 0.5s ease;
+}
+
+.table-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+}
+
+.table-primary th {
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate tag rows
+    const tagRows = document.querySelectorAll('.tag-row');
+    tagRows.forEach((row, index) => {
+        setTimeout(() => {
+            row.style.opacity = '1';
+            row.style.transform = 'translateX(0)';
+        }, 100 * index);
+    });
+
+    // Tag badge hover effects
+    const tagBadges = document.querySelectorAll('.tag-name-badge');
+    tagBadges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.05)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Button hover effects
+    const actionBtns = document.querySelectorAll('.tag-view-btn, .tag-edit-btn, .tag-delete-btn');
+    actionBtns.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+        });
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+
+    // Page input focus effect
+    const pageInput = document.querySelector('.tag-page-input');
+    if (pageInput) {
+        pageInput.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-1px)';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(13, 110, 253, 0.25)';
+        });
+        pageInput.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+
+    // Delete confirmation (existing functionality)
+    document.addEventListener('submit', function (e) {
+        var form = e.target.closest('form.js-delete-tag');
+        if (!form) return;
+        var name = form.getAttribute('data-name') || '';
+        if (!confirm('Delete tag "' + name + '"? This removes it from all tasks.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>

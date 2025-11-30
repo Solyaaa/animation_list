@@ -1,0 +1,285 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model IReadOnlyList<TodoListApp.WebApp.Models.TaskItemDto>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 assigned-header">
+        <h1 class="h3 text-primary assigned-title">Tasks Assigned to Me</h1>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4 assigned-filters-card">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Filter & Sort Tasks</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 assigned-filters-form">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Status Filter</label>
+                    <select name="status" class="form-select status-select">
+                        <option value="">All Active Tasks</option>
+                        <option value="0">Pending</option>
+                        <option value="1">In Progress</option>
+                        <option value="2">Done</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Sort By</label>
+                    <select name="sortBy" class="form-select sort-select">
+                        <option value="">Created Date</option>
+                        <option value="name">Task Name</option>
+                        <option value="duedate">Due Date</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 apply-filters-btn">
+                        <i class="bi bi-funnel me-2"></i>Apply Filters
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tasks Table -->
+    <div class="card border-0 shadow-sm assigned-table-card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="ps-4">Task Title</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var t in Model)
+                    {
+                        <tr class="assigned-task-row">
+                            <td class="ps-4">
+                                <div class="fw-semibold task-title-hover">@t.Title</div>
+                                @if (!string.IsNullOrEmpty(t.Description))
+                                {
+                                    <div class="text-muted small mt-1">@t.Description</div>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var isOverdue = t.DueDate?.Date < DateTime.Now.Date && t.Status != TodoListApp.Domain.Entities.TaskStatus.Done;
+                                }
+                                <span class="badge @(isOverdue ? "bg-danger overdue-badge" : "bg-secondary") due-date-badge">
+                                    @(t.DueDate?.ToString("yyyy-MM-dd") ?? "No due date")
+                                </span>
+                            </td>
+                            <td>
+                                @{
+                                    var statusClass = t.Status.ToString() switch
+                                    {
+                                        "Pending" => "bg-warning",
+                                        "InProgress" => "bg-primary",
+                                        "Done" => "bg-success",
+                                        _ => "bg-secondary"
+                                    };
+                                }
+                                <span class="badge @statusClass status-badge">@t.Status</span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="/Tasks/Details/@t.Id" class="btn btn-sm btn-outline-info view-task-btn">
+                                    <i class="bi bi-eye me-1"></i>View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5 assigned-empty-state">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <h4 class="text-muted mt-3">No tasks assigned to you</h4>
+            <p class="text-muted">Tasks assigned to you will appear here.</p>
+        </div>
+    }
+</div>
+
+<style>
+.assigned-header {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 1rem;
+}
+
+.assigned-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.assigned-filters-card, .assigned-table-card {
+    border-radius: 0.75rem;
+}
+
+.status-select, .sort-select {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.status-select:focus, .sort-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    transform: translateY(-1px);
+}
+
+.apply-filters-btn {
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.apply-filters-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.task-title-hover {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.task-title-hover:hover {
+    color: #0d6efd;
+    transform: translateX(5px);
+}
+
+.due-date-badge, .status-badge {
+    transition: all 0.3s ease;
+}
+
+.due-date-badge:hover, .status-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.overdue-badge {
+    animation: pulseOverdue 2s infinite;
+}
+
+.view-task-btn {
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.view-task-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+}
+
+.assigned-task-row {
+    transition: all 0.3s ease;
+}
+
+.assigned-task-row:hover {
+    background-color: #f8f9fa;
+}
+
+.assigned-empty-state {
+    opacity: 0;
+    animation: fadeIn 1s ease-in-out forwards;
+}
+
+.table-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+}
+
+.table-primary th {
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+
+@@keyframes pulseOverdue {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Select focus effects
+    const selects = document.querySelectorAll('.status-select, .sort-select');
+    selects.forEach(select => {
+        select.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-1px)';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(13, 110, 253, 0.25)';
+        });
+        select.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Task title hover effects
+    const taskTitles = document.querySelectorAll('.task-title-hover');
+    taskTitles.forEach(title => {
+        title.addEventListener('mouseenter', function() {
+            this.style.color = '#0d6efd';
+            this.style.transform = 'translateX(5px)';
+        });
+        title.addEventListener('mouseleave', function() {
+            this.style.color = '';
+            this.style.transform = 'translateX(0)';
+        });
+    });
+
+    // Badge hover effects
+    const badges = document.querySelectorAll('.due-date-badge, .status-badge');
+    badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.05)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // View button hover effects
+    const viewBtns = document.querySelectorAll('.view-task-btn');
+    viewBtns.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(13, 202, 240, 0.3)';
+        });
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Apply filters button animation
+    const applyBtn = document.querySelector('.apply-filters-btn');
+    if (applyBtn) {
+        applyBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        applyBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+});
+</script>

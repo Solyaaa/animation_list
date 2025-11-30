@@ -1,0 +1,294 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model IReadOnlyList<TodoListApp.WebApp.Models.TaskItemDto>
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 search-header">
+        <h1 class="h3 text-primary search-title">Search Tasks</h1>
+    </div>
+
+    <!-- Search Form -->
+    <div class="card border-0 shadow-sm mb-4 search-form-card">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Search Criteria</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 search-filters-form">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Title Contains</label>
+                    <input name="title" class="form-control search-title-input"
+                           placeholder="Enter task title..." />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Created From</label>
+                    <input name="createdFrom" type="date" class="form-control search-date-input" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Due To</label>
+                    <input name="dueTo" type="date" class="form-control search-date-input" />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100 search-submit-btn">
+                        <i class="bi bi-search me-2"></i>Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results -->
+    @if (Model != null && Model.Count > 0)
+    {
+        <div class="card border-0 shadow-sm search-results-card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Search Results</h5>
+                <span class="badge bg-primary results-count">@Model.Count tasks found</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-primary">
+                            <tr>
+                                <th class="ps-4">Task Title</th>
+                                <th>List ID</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var t in Model)
+                        {
+                            <tr class="search-result-row">
+                                <td class="ps-4">
+                                    <div class="fw-semibold result-title-hover">@t.Title</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info list-id-badge">@t.TodoListId</span>
+                                </td>
+                                <td>
+                                    @{
+                                        var isOverdue = t.DueDate?.Date < DateTime.Now.Date && t.Status != TodoListApp.Domain.Entities.TaskStatus.Done;
+                                    }
+                                    <span class="badge @(isOverdue ? "bg-danger overdue-badge" : "bg-secondary") result-due-badge">
+                                        @(t.DueDate?.ToString("yyyy-MM-dd") ?? "No due date")
+                                    </span>
+                                </td>
+                                <td>
+                                    @{
+                                        var statusClass = t.Status.ToString() switch
+                                        {
+                                            "Pending" => "bg-warning",
+                                            "InProgress" => "bg-primary",
+                                            "Done" => "bg-success",
+                                            _ => "bg-secondary"
+                                        };
+                                    }
+                                    <span class="badge @statusClass result-status-badge">@t.Status</span>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <a href="/Tasks/Details/@t.Id" class="btn btn-sm btn-outline-info result-view-btn">
+                                        <i class="bi bi-eye me-1"></i>View
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else if (Model != null)
+    {
+        <div class="card border-0 shadow-sm search-no-results">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-search display-1 text-muted"></i>
+                <h4 class="text-muted mt-3">No tasks found</h4>
+                <p class="text-muted">Try adjusting your search criteria.</p>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+.search-header {
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 1rem;
+}
+
+.search-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.search-form-card, .search-results-card, .search-no-results {
+    border-radius: 0.75rem;
+}
+
+.search-title-input, .search-date-input {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.search-title-input:focus, .search-date-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    transform: translateY(-1px);
+}
+
+.search-submit-btn {
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.search-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.result-title-hover {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.result-title-hover:hover {
+    color: #0d6efd;
+    transform: translateX(5px);
+}
+
+.list-id-badge, .result-due-badge, .result-status-badge {
+    transition: all 0.3s ease;
+}
+
+.list-id-badge:hover, .result-due-badge:hover, .result-status-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.overdue-badge {
+    animation: pulseOverdue 2s infinite;
+}
+
+.result-view-btn {
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+}
+
+.result-view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(13, 202, 240, 0.3);
+}
+
+.search-result-row {
+    transition: all 0.3s ease;
+}
+
+.search-result-row:hover {
+    background-color: #f8f9fa;
+}
+
+.results-count {
+    font-size: 0.9rem;
+    padding: 0.5em 0.8em;
+}
+
+.search-no-results {
+    opacity: 0;
+    animation: fadeIn 1s ease-in-out forwards;
+}
+
+.table-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+}
+
+.table-primary th {
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+
+@@keyframes pulseOverdue {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Input focus effects
+    const inputs = document.querySelectorAll('.search-title-input, .search-date-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-1px)';
+            this.style.boxShadow = '0 0 0 0.2rem rgba(13, 110, 253, 0.25)';
+        });
+        input.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Search button animation
+    const searchBtn = document.querySelector('.search-submit-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        searchBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    }
+
+    // Result title hover effects
+    const resultTitles = document.querySelectorAll('.result-title-hover');
+    resultTitles.forEach(title => {
+        title.addEventListener('mouseenter', function() {
+            this.style.color = '#0d6efd';
+            this.style.transform = 'translateX(5px)';
+        });
+        title.addEventListener('mouseleave', function() {
+            this.style.color = '';
+            this.style.transform = 'translateX(0)';
+        });
+    });
+
+    // Badge hover effects
+    const badges = document.querySelectorAll('.list-id-badge, .result-due-badge, .result-status-badge');
+    badges.forEach(badge => {
+        badge.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px) scale(1.05)';
+            this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        });
+        badge.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // View button hover effects
+    const viewBtns = document.querySelectorAll('.result-view-btn');
+    viewBtns.forEach(btn => {
+        btn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 4px 8px rgba(13, 202, 240, 0.3)';
+        });
+        btn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>

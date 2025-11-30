@@ -1,0 +1,33 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "_AuthLayout";
+}
+<section class="form">
+    <h1>Create account</h1>
+    <p class="sub">Join and start organizing</p>
+
+    @if (TempData["Error"] is string err)
+    {
+        <div class="alert">@err</div>
+    }
+
+    <form method="post" asp-action="Register">
+        <div class="fi">
+            <input name="email" type="email" placeholder="Email" required />
+        </div>
+        <div class="fi">
+            <input name="password" type="password" placeholder="Password" required />
+        </div>
+        <button class="btn" type="submit">
+            <span>Sign up</span>
+            <svg viewBox="0 0 24 24" class="arrow"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+        </button>
+    </form>
+
+    <div class="switch">
+        Already have an account?
+        <a asp-controller="Auth" asp-action="Login">Sign in</a>
+    </div>
+</section>

@@ -1,0 +1,86 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model IReadOnlyList<TodoListApp.WebApp.Models.ListItemDto>
+@{
+    ViewData["Title"] = "My Lists";
+}
+
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="index-header mb-4">
+        <h1 class="h2 text-primary mb-2" style="background: linear-gradient(135deg, #0d6efd, #6610f2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">My Todo Lists</h1>
+        <a class="btn btn-primary btn-lg" href="/Lists/Create" style="transition: all 0.3s ease;">
+            <i class="bi bi-plus-circle me-2"></i>Create New List
+        </a>
+    </div>
+
+    <!-- Lists Table -->
+    <partial name="_ListsTable" model="Model" />
+</div>
+
+<style>
+.index-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 1.5rem;
+}
+
+.lists-table {
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.lists-table .table {
+    margin-bottom: 0;
+}
+
+/* Hover effects */
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate header
+        const header = document.querySelector('.index-header h1');
+        if (header) {
+            header.style.opacity = '0';
+            header.style.transform = 'translateY(-20px)';
+
+            setTimeout(() => {
+                header.style.transition = 'all 0.8s ease';
+                header.style.opacity = '1';
+                header.style.transform = 'translateY(0)';
+            }, 100);
+        }
+
+        // Pulse animation for create button
+        const createBtn = document.querySelector('.index-header .btn');
+        if (createBtn) {
+            setInterval(() => {
+                createBtn.style.transform = 'translateY(-2px) scale(1.02)';
+                setTimeout(() => {
+                    createBtn.style.transform = 'translateY(-2px) scale(1)';
+                }, 500);
+            }, 3000);
+        }
+
+        // Add hover effects to all buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                if (!this.classList.contains('index-header')) {
+                    this.style.transform = 'translateY(0)';
+                }
+                this.style.boxShadow = 'none';
+            });
+        });
+    });
+</script>

@@ -1,0 +1,39 @@
+@{
+    var listId = ViewBag.ListId is int v ? v
+        : (Model != null && Model.Count > 0 ? Model[0].TodoListId : 0);
+}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0 text-dark">
+            <i class="bi bi-plus-circle me-2"></i>Create New Task
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post" asp-controller="Lists" asp-action="CreateTask" class="row g-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="listId" value="@listId" />
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Task Title</label>
+                <input class="form-control" name="title" placeholder="Enter task title" required />
+            </div>
+
+            <div class="col-md-5">
+                <label class="form-label fw-semibold">Description</label>
+                <input class="form-control" name="description" placeholder="Enter description" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Due Date</label>
+                <input class="form-control" name="dueDate" type="date" />
+            </div>
+
+            <div class="col-12">
+                <button class="btn btn-primary px-4" type="submit">
+                    <i class="bi bi-plus-lg me-2"></i>Add Task
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

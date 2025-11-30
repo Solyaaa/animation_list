@@ -1,0 +1,127 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model TodoListApp.WebApp.Models.CreateListDto
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card border-0 shadow-lg create-card" style="animation: fadeIn 0.6s ease-in-out;">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <a href="/Lists" class="btn btn-sm btn-outline-secondary me-3" style="transition: all 0.3s ease;">
+                            <i class="bi bi-arrow-left"></i>
+                        </a>
+                        <h2 class="h4 mb-0 text-primary" style="background: linear-gradient(135deg, #0d6efd, #6610f2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Create New List</h2>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" novalidate>
+                        <div class="mb-4" style="animation: slideUp 0.5s ease-out 0.1s; opacity: 1;">
+                            <label asp-for="Title" class="form-label fw-semibold">List Title</label>
+                            <input asp-for="Title" class="form-control form-control-lg"
+                                   placeholder="Enter list title..." required
+                                   style="transition: all 0.3s ease;" />
+                            <div class="invalid-feedback">Please provide a title for your list.</div>
+                        </div>
+
+                        <div class="mb-4" style="animation: slideUp 0.5s ease-out 0.2s; opacity: 1;">
+                            <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                            <textarea asp-for="Description" class="form-control"
+                                      rows="4" placeholder="Add a description (optional)..."
+                                      style="transition: all 0.3s ease;"></textarea>
+                        </div>
+
+                        <div class="d-flex gap-3 pt-2" style="animation: slideUp 0.5s ease-out 0.3s; opacity: 1;">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" style="transition: all 0.3s ease;">
+                                <i class="bi bi-plus-circle me-2"></i>Create List
+                            </button>
+                            <a href="/Lists" class="btn btn-outline-secondary btn-lg px-4" style="transition: all 0.3s ease;">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .create-card {
+        border-radius: 1rem;
+        background: #fff;
+    }
+
+    .create-card .form-control {
+        border: 2px solid #e9ecef;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .create-card .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+        transform: translateY(-2px);
+    }
+
+    .create-card .btn {
+        border-radius: 0.5rem;
+        font-weight: 500;
+    }
+
+    /* Hover effects */
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .btn-outline-secondary:hover {
+        transform: translateX(-3px);
+    }
+
+    .form-control:focus {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(13, 110, 253, 0.3);
+    }
+</style>
+
+<script>
+    // Add animations via JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add hover effects
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Add pulse animation to submit button
+        const submitBtn = document.querySelector('.btn-primary');
+        if (submitBtn) {
+            setInterval(() => {
+                submitBtn.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    submitBtn.style.transform = 'scale(1)';
+                }, 500);
+            }, 2000);
+        }
+
+        // Add focus effects to inputs
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 5px 15px rgba(13, 110, 253, 0.3)';
+            });
+            input.addEventListener('blur', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+    });
+</script>

@@ -1,0 +1,66 @@
+@model IReadOnlyList<TodoListApp.WebApp.Models.TaskItemDto>
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TodoListApp.WebApp.Models
+@using TaskStatus = TodoListApp.WebApp.Models.TaskStatus
+@{
+    ViewData["Title"] = "My assigned tasks";
+    int? filterStatus = (int?)ViewBag.Status;
+    string? sortBy = (string?)ViewBag.SortBy;
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">My assigned tasks</h2>
+  <form method="get" class="d-flex gap-2">
+    <select name="status" class="form-select form-select-sm" style="width:auto">
+      <option value="" selected="@(!filterStatus.HasValue)">Active (default)</option>
+      <option value="0" selected="@(filterStatus==0)">Pending only</option>
+      <option value="1" selected="@(filterStatus==1)">InProgress only</option>
+      <option value="2" selected="@(filterStatus==2)">Done only</option>
+    </select>
+    <select name="sortBy" class="form-select form-select-sm" style="width:auto">
+      <option value="" selected="@(string.IsNullOrWhiteSpace(sortBy))">Default</option>
+      <option value="name" selected="@(sortBy=="name")">By name</option>
+      <option value="due" selected="@(sortBy=="due")">By due date</option>
+    </select>
+    <button class="btn btn-sm btn-primary" type="submit">Apply</button>
+  </form>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Title</th><th>Due</th><th>Status</th><th>Overdue</th><th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      @foreach (var t in Model)
+      {
+        var rowClass = (t.IsOverdue && t.Status != (TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Done) ? "overdue" : "";
+        <tr class="@rowClass">
+          <td>@t.Title<br/><small class="text-muted">@t.Description</small></td>
+          <td>@(t.DueDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+          <td>
+            <form method="post" asp-controller="Assigned" asp-action="SetStatus" class="d-flex gap-2 align-items-center">
+              @Html.AntiForgeryToken()
+              <input type="hidden" name="taskId" value="@t.Id"/>
+              <input type="hidden" name="filterStatus" value="@(filterStatus?.ToString() ?? "")"/>
+              <input type="hidden" name="sortBy" value="@sortBy"/>
+              <select name="status" class="form-select form-select-sm" style="width:auto">
+                <option value="0" selected="@(t.Status==(TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Pending)">Pending</option>
+                <option value="1" selected="@(t.Status==(TodoListApp.Domain.Entities.TaskStatus)TaskStatus.InProgress)">InProgress</option>
+                <option value="2" selected="@(t.Status==(TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Done)">Done</option>
+              </select>
+              <button class="btn btn-sm btn-outline-primary" type="submit">Set</button>
+            </form>
+          </td>
+          <td>@(t.IsOverdue ? "⚠️" : "")</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" asp-controller="Tasks" asp-action="Details" asp-route-id="@t.Id">Open</a>
+          </td>
+        </tr>
+      }
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,317 @@
+@model IReadOnlyList<TodoListApp.WebApp.Models.TaskItemDto>
+@using TodoListApp.WebApp.Models
+@using TaskStatus = TodoListApp.WebApp.Models.TaskStatus
+@{
+    var listId = (int)ViewBag.ListId;
+}
+
+<div class="card shadow-sm mb-4 task-table">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th class="ps-4" style="width:28%">Title</th>
+                        <th style="width:12%">Due</th>
+                        <th style="width:15%">Status</th>
+                        <th style="width:30%">Tags</th>
+                        <th class="text-end pe-4" style="width:15%">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @{
+                    int taskIndex = 0;
+                }
+                @foreach (var t in Model)
+                {
+                    taskIndex++;
+                    var isOverdue = t.IsOverdue && t.Status != (TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Done;
+                    <tr class="task-row @(isOverdue ? "overdue-row" : "")"
+                        style="opacity: 0; transform: translateX(-30px);">
+                        <td class="ps-4">
+                            <div class="fw-semibold text-dark task-title">@t.Title</div>
+                            <div class="text-muted small mt-1">@t.Description</div>
+                        </td>
+                        <td>
+                            <span class="badge @(isOverdue ? "bg-danger overdue-badge" : "bg-secondary")">
+                                @(t.DueDate?.ToString("yyyy-MM-dd") ?? "-")
+                            </span>
+                        </td>
+                        <td>
+                            <form method="post" action="/Lists/SetStatus" class="d-flex gap-2 align-items-center">
+                                <input type="hidden" name="taskId" value="@t.Id" />
+                                <input type="hidden" name="listId" value="@t.TodoListId" />
+                                <select name="status" class="form-select form-select-sm status-select">
+                                    <option value="0" selected="@(t.Status==(TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Pending)">Pending</option>
+                                    <option value="1" selected="@(t.Status==(TodoListApp.Domain.Entities.TaskStatus)TaskStatus.InProgress)">In Progress</option>
+                                    <option value="2" selected="@(t.Status==(TodoListApp.Domain.Entities.TaskStatus)TaskStatus.Done)">Done</option>
+                                </select>
+                                <button class="btn btn-sm btn-outline-primary status-btn" type="submit">Update</button>
+                            </form>
+                        </td>
+                        <td>
+                            <div class="mb-2">
+                                @if (t.Tags?.Count > 0)
+                                {
+                                    foreach (var tag in t.Tags)
+                                    {
+                                        <span class="badge bg-primary tag-badge d-inline-flex align-items-center">
+                                            @tag.Name
+                                            <form method="post" action="/Lists/RemoveTag" class="d-inline ms-1">
+                                                <input type="hidden" name="listId" value="@t.TodoListId" />
+                                                <input type="hidden" name="taskId" value="@t.Id" />
+                                                <input type="hidden" name="tagId" value="@tag.Id" />
+                                                <button class="btn btn-sm p-0 text-light border-0 tag-remove-btn" type="submit" title="Remove">
+                                                    <i class="bi bi-x"></i>
+                                                </button>
+                                            </form>
+                                        </span>
+                                    }
+                                }
+                                else {
+                                    <span class="text-muted small">No tags</span>
+                                }
+                            </div>
+                            <form method="post" action="/Lists/AddTag" class="d-flex gap-2">
+                                <input type="hidden" name="listId" value="@t.TodoListId" />
+                                <input type="hidden" name="taskId" value="@t.Id" />
+                                <input class="form-control form-control-sm tag-input" name="name" placeholder="Add tag..." />
+                                <button class="btn btn-sm btn-success tag-add-btn" type="submit">Add</button>
+                            </form>
+                        </td>
+                        <td class="text-end pe-4">
+                            <a href="/Tasks/Details/@t.Id" class="btn btn-sm btn-outline-info view-btn">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-select {
+    min-width: 120px;
+    transition: all 0.3s ease;
+}
+
+.table-primary {
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: white;
+}
+
+.table-primary th {
+    border: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+}
+
+.overdue-row {
+    background: #fff5f5 !important;
+    border-left: 4px solid #dc3545;
+}
+
+/* Hover effects */
+.task-title {
+    transition: all 0.3s ease;
+}
+
+.task-title:hover {
+    color: #0d6efd !important;
+    transform: translateX(5px);
+}
+
+.status-select:focus {
+    transform: scale(1.05);
+    box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+}
+
+.tag-badge {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.tag-badge:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.tag-remove-btn {
+    transition: all 0.3s ease;
+}
+
+.tag-remove-btn:hover {
+    transform: scale(1.2);
+}
+
+.tag-input:focus {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(25, 135, 84, 0.3);
+}
+
+.status-btn, .tag-add-btn, .view-btn {
+    transition: all 0.3s ease;
+}
+
+.status-btn:hover, .tag-add-btn:hover, .view-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.task-row {
+    transition: all 0.5s ease;
+}
+
+.overdue-badge {
+    animation: pulseOverdue 2s infinite;
+}
+
+@@keyframes pulseOverdue {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate task rows with delay
+        const taskRows = document.querySelectorAll('.task-row');
+        taskRows.forEach((row, index) => {
+            setTimeout(() => {
+                row.style.opacity = '1';
+                row.style.transform = 'translateX(0)';
+
+                // Add shake animation for overdue tasks
+                if (row.classList.contains('overdue-row')) {
+                    setTimeout(() => {
+                        row.style.transform = 'translateX(-5px)';
+                        setTimeout(() => {
+                            row.style.transform = 'translateX(5px)';
+                            setTimeout(() => {
+                                row.style.transform = 'translateX(0)';
+                            }, 100);
+                        }, 100);
+                    }, 500 + (index * 100));
+                }
+            }, 100 * index);
+        });
+
+        // Task title hover effects
+        const taskTitles = document.querySelectorAll('.task-title');
+        taskTitles.forEach(title => {
+            title.addEventListener('mouseenter', function() {
+                this.style.color = '#0d6efd';
+                this.style.transform = 'translateX(5px)';
+            });
+            title.addEventListener('mouseleave', function() {
+                this.style.color = '';
+                this.style.transform = 'translateX(0)';
+            });
+        });
+
+        // Status select focus effects
+        const statusSelects = document.querySelectorAll('.status-select');
+        statusSelects.forEach(select => {
+            select.addEventListener('focus', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.boxShadow = '0 0 10px rgba(13, 110, 253, 0.5)';
+            });
+            select.addEventListener('blur', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Tag badges hover effects
+        const tagBadges = document.querySelectorAll('.tag-badge');
+        tagBadges.forEach(badge => {
+            badge.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px) scale(1.05)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            });
+            badge.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Tag remove button effects
+        const tagRemoveBtns = document.querySelectorAll('.tag-remove-btn');
+        tagRemoveBtns.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.2)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        });
+
+        // Tag input focus effects
+        const tagInputs = document.querySelectorAll('.tag-input');
+        tagInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 5px 15px rgba(25, 135, 84, 0.3)';
+            });
+            input.addEventListener('blur', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Button hover effects
+        const buttons = document.querySelectorAll('.status-btn, .tag-add-btn, .view-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+        });
+
+        // Pulse animation for overdue badges
+        const overdueBadges = document.querySelectorAll('.overdue-badge');
+        overdueBadges.forEach(badge => {
+            setInterval(() => {
+                badge.style.transform = 'scale(1.1)';
+                setTimeout(() => {
+                    badge.style.transform = 'scale(1)';
+                }, 500);
+            }, 2000);
+        });
+
+        // Add subtle animation when status changes
+        statusSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                const form = this.closest('form');
+                const submitBtn = form.querySelector('.status-btn');
+
+                // Add loading animation
+                submitBtn.innerHTML = '<i class="bi bi-arrow-repeat spinner"></i> Updating...';
+                submitBtn.disabled = true;
+
+                // Simulate loading and then submit
+                setTimeout(() => {
+                    form.submit();
+                }, 800);
+            });
+        });
+    });
+</script>
+
+<style>
+    .spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>

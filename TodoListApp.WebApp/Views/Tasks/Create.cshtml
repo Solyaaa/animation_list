@@ -1,0 +1,223 @@
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using TodoListApp.WebApp.Models
+@{
+    ViewData["Title"] = "Створити завдання";
+    var listId = ViewBag.ListId;
+    var allTags = ViewBag.AllTags as List<TagDto> ?? new List<TagDto>();
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8">
+            <div class="card border-0 shadow-lg task-create-card">
+                <div class="card-header bg-transparent border-0 py-4">
+                    <div class="d-flex align-items-center">
+                        <a class="btn btn-sm btn-outline-secondary me-3 task-back-btn"
+                           asp-controller="Lists" asp-action="Details" asp-route-id="@listId">
+                            <i class="bi bi-arrow-left"></i>
+                        </a>
+                        <h2 class="h4 mb-0 text-primary task-create-title">Створити нове завдання</h2>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Create" method="post">
+                        <input type="hidden" name="listId" value="@listId" />
+                        @Html.AntiForgeryToken()
+                        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3 task-input-group">
+                                    <label for="title" class="form-label fw-semibold">Назва завдання</label>
+                                    <input type="text" name="title" class="form-control task-title-input"
+                                           placeholder="Введіть назву завдання..." required />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3 task-input-group">
+                                    <label for="description" class="form-label fw-semibold">Опис (необов'язково)</label>
+                                    <textarea name="description" class="form-control task-desc-input"
+                                              rows="3" placeholder="Додайте опис..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (allTags.Any())
+                        {
+                            <div class="mb-4 task-tags-section">
+                                <label class="form-label fw-semibold">Оберіть теги</label>
+                                <div class="border rounded p-3 task-tags-container">
+                                    @foreach (var tag in allTags)
+                                    {
+                                        <div class="form-check task-tag-item">
+                                            <input class="form-check-input task-tag-checkbox"
+                                                   type="checkbox" name="selectedTags" value="@tag.Id" id="tag-@tag.Id">
+                                            <label class="form-check-label task-tag-label" for="tag-@tag.Id">
+                                                <span class="badge bg-primary me-1">@tag.Name</span>
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info task-no-tags">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Ще не створено жодного тега. Ви можете
+                                <a asp-controller="Tags" asp-action="Create" class="alert-link">створити їх тут</a>.
+                            </div>
+                        }
+
+                        <div class="d-flex gap-3 mt-4 task-buttons">
+                            <button type="submit" class="btn btn-primary btn-lg px-5 task-submit-btn">
+                                <i class="bi bi-plus-circle me-2"></i>Створити завдання
+                            </button>
+                            <a class="btn btn-outline-secondary btn-lg px-4 task-cancel-btn"
+                               asp-controller="Lists" asp-action="Details" asp-route-id="@listId">
+                                Скасувати
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.task-create-card {
+    border-radius: 1rem;
+    background: #fff;
+}
+
+.task-create-title {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+}
+
+.task-input-group .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.task-input-group .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    transform: translateY(-2px);
+}
+
+.task-tags-container {
+    max-height: 200px;
+    overflow-y: auto;
+    background: #f8f9fa;
+    border-radius: 0.5rem;
+}
+
+.task-tag-item {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+    margin-bottom: 0.25rem;
+}
+
+.task-tag-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.task-tag-checkbox:checked + .task-tag-label .badge {
+    background: linear-gradient(135deg, #198754, #20c997) !important;
+    transform: scale(1.1);
+}
+
+.task-tag-label .badge {
+    transition: all 0.3s ease;
+}
+
+.task-back-btn, .task-submit-btn, .task-cancel-btn {
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.task-back-btn:hover {
+    transform: translateX(-3px);
+}
+
+.task-submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.task-cancel-btn:hover {
+    transform: translateY(-2px);
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+.task-no-tags {
+    border-radius: 0.5rem;
+    border: none;
+    background: #e7f3ff;
+    color: #0a58ca;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Input focus effects
+    const inputs = document.querySelectorAll('.task-title-input, .task-desc-input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 5px 15px rgba(13, 110, 253, 0.3)';
+        });
+        input.addEventListener('blur', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+
+    // Tag checkbox effects
+    const tagCheckboxes = document.querySelectorAll('.task-tag-checkbox');
+    tagCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const badge = this.nextElementSibling.querySelector('.badge');
+            if (this.checked) {
+                badge.style.transform = 'scale(1.1)';
+                badge.style.background = 'linear-gradient(135deg, #198754, #20c997)';
+            } else {
+                badge.style.transform = 'scale(1)';
+                badge.style.background = '';
+            }
+        });
+    });
+
+    // Submit button pulse animation
+    const submitBtn = document.querySelector('.task-submit-btn');
+    if (submitBtn) {
+        setInterval(() => {
+            submitBtn.style.transform = 'translateY(-2px) scale(1.02)';
+            setTimeout(() => {
+                submitBtn.style.transform = 'translateY(-2px) scale(1)';
+            }, 500);
+        }, 3000);
+    }
+
+    // Back button hover effect
+    const backBtn = document.querySelector('.task-back-btn');
+    if (backBtn) {
+        backBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateX(-3px)';
+        });
+        backBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateX(0)';
+        });
+    }
+});
+</script>
