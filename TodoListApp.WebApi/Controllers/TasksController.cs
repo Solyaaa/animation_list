@@ -20,7 +20,6 @@ public class TasksController : ControllerBase
     private string UserId =>
         User.FindFirstValue("uid") ?? User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
 
-    // POST api/tasks  (WebApp шле сюди тіло з ListId, Title, ...)
     [HttpPost]
     public async Task<ActionResult<int>> Create([FromBody] CreateTaskDto r)
     {
@@ -34,7 +33,7 @@ public class TasksController : ControllerBase
             Description = r.Description,
             DueDate = r.DueDate,
             TodoListId = r.ListId,
-            AssignedUserId = UserId,          // US07: призначаємо автора
+            AssignedUserId = UserId,
             Status = TaskStatus.Pending,
             CreatedAt = DateTime.UtcNow
         };
@@ -45,15 +44,6 @@ public class TasksController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = t.Id }, t.Id);
     }
 
-    // (НЕобов’язково) альтернативний вкладений маршрут: POST api/lists/{listId}/tasks
-    [HttpPost("~/api/lists/{listId:int}/tasks")]
-    public async Task<ActionResult<int>> CreateInList(int listId, [FromBody] CreateTaskDto r)
-    {
-        r.ListId = listId;
-        return await Create(r);
-    }
-
-    // GET api/tasks/{id}
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TaskItemDto>> GetById(int id)
     {
@@ -71,7 +61,7 @@ public class TasksController : ControllerBase
             Title = t.Title,
             Description = t.Description,
             DueDate = t.DueDate,
-            Status = t.Status,
+            Status = t.Status.ToString(), // ← КОНВЕРТУЄМО В STRING
             AssignedUserId = t.AssignedUserId,
             Tags = t.TaskTags
                 .Select(tt => new WebApi.Models.Tags.TagDto { Id = tt.TagId, Name = tt.Tag!.Name })
@@ -79,7 +69,6 @@ public class TasksController : ControllerBase
         };
     }
 
-    // PUT api/tasks/{id}
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateTaskDto dto)
     {
@@ -92,13 +81,17 @@ public class TasksController : ControllerBase
         t.Title = dto.Title;
         t.Description = dto.Description;
         t.DueDate = dto.DueDate;
-        t.Status = dto.Status;
+
+        // КОНВЕРТУЄМО string → enum
+        if (Enum.TryParse<TaskStatus>(dto.Status, true, out var status))
+        {
+            t.Status = status;
+        }
 
         await _db.SaveChangesAsync();
         return NoContent();
     }
 
-    // DELETE api/tasks/{id}
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
@@ -111,15 +104,26 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
-    // Assigned (US11–US14)
     [HttpGet("my-assigned")]
-    public async Task<IEnumerable<TaskItemDto>> MyAssigned([FromQuery] TaskStatus? status, [FromQuery] string? sortBy)
+    public async Task<IEnumerable<TaskItemDto>> MyAssigned([FromQuery] string? status = null, [FromQuery] string? sortBy = null)
     {
-        var q = _db.TodoTasks.Include(t => t.TodoList)
+        var q = _db.TodoTasks
+            .Include(t => t.TodoList)
+            .Include(t => t.TaskTags).ThenInclude(tt => tt.Tag)
             .Where(t => t.AssignedUserId == UserId);
 
-        q = status.HasValue ? q.Where(t => t.Status == status)
-                            : q.Where(t => t.Status != TaskStatus.Done);
+        // Фільтрація за статусом (string → enum)
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (Enum.TryParse<TaskStatus>(status, true, out var statusEnum))
+            {
+                q = q.Where(t => t.Status == statusEnum);
+            }
+        }
+        else
+        {
+            q = q.Where(t => t.Status != TaskStatus.Done);
+        }
 
         q = (sortBy?.ToLowerInvariant()) switch
         {
@@ -135,12 +139,14 @@ public class TasksController : ControllerBase
             Title = t.Title,
             Description = t.Description,
             DueDate = t.DueDate,
-            Status = t.Status,
-            AssignedUserId = t.AssignedUserId
+            Status = t.Status.ToString(), // ← КОНВЕРТУЄМО В STRING
+            AssignedUserId = t.AssignedUserId,
+            Tags = t.TaskTags
+                .Select(tt => new WebApi.Models.Tags.TagDto { Id = tt.TagId, Name = tt.Tag!.Name })
+                .ToList()
         }).ToListAsync();
     }
 
-    // PATCH api/tasks/{id}/status/{status}
     [HttpPatch("{id:int}/status/{status}")]
     public async Task<IActionResult> ChangeStatus(int id, TaskStatus status)
     {
@@ -154,11 +160,12 @@ public class TasksController : ControllerBase
         return NoContent();
     }
 
-    // Search (US15, US16)
     [HttpGet("search")]
     public async Task<IEnumerable<TaskItemDto>> Search(string? title, DateTime? createdFrom, DateTime? dueTo)
     {
-        var q = _db.TodoTasks.Include(t => t.TodoList)
+        var q = _db.TodoTasks
+            .Include(t => t.TodoList)
+            .Include(t => t.TaskTags).ThenInclude(tt => tt.Tag)
             .Where(t => t.TodoList!.OwnerId == UserId || t.AssignedUserId == UserId);
 
         if (!string.IsNullOrWhiteSpace(title)) q = q.Where(t => t.Title.Contains(title));
@@ -172,8 +179,11 @@ public class TasksController : ControllerBase
             Title = t.Title,
             Description = t.Description,
             DueDate = t.DueDate,
-            Status = t.Status,
-            AssignedUserId = t.AssignedUserId
+            Status = t.Status.ToString(), // ← КОНВЕРТУЄМО В STRING
+            AssignedUserId = t.AssignedUserId,
+            Tags = t.TaskTags
+                .Select(tt => new WebApi.Models.Tags.TagDto { Id = tt.TagId, Name = tt.Tag!.Name })
+                .ToList()
         }).ToListAsync();
     }
 }

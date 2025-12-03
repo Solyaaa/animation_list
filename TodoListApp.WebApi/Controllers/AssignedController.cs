@@ -3,11 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Infrastructure.Persistence;
 using TodoListApp.WebApi.Models.Tasks;
-using TodoListApp.WebApi.Models.Tags;
 using TodoListApp.Domain.Entities;
 using TaskStatus = TodoListApp.Domain.Entities.TaskStatus;
-// Alias, щоб уникнути конфлікту з іншими TagDto
-using WebApiTagDto = TodoListApp.WebApi.Models.Tags.TagDto;
 
 namespace TodoListApp.WebApi.Controllers;
 
@@ -21,22 +18,27 @@ public class AssignedController : ControllerBase
 
     private string UserId => User.FindFirst("uid")?.Value ?? "";
 
-    // GET /api/assigned?status=&sortBy=
     [HttpGet("my")]
-    public async Task<IEnumerable<TaskItemDto>> MyAssigned([FromQuery] int? status, [FromQuery] string? sortBy)
+    public async Task<IEnumerable<TaskItemDto>> MyAssigned([FromQuery] string? status = null, [FromQuery] string? sortBy = null)
     {
         var q = db.TodoTasks
             .Include(t => t.TodoList)
             .Include(t => t.TaskTags).ThenInclude(x => x.Tag)
             .Where(t => t.AssignedUserId == UserId);
 
-        // US12: за замовчуванням лише активні (не Done)
-        if (status is null)
-            q = q.Where(t => t.Status != TaskStatus.Done);
+        // Фільтрація за статусом
+        if (!string.IsNullOrEmpty(status))
+        {
+            if (Enum.TryParse<TaskStatus>(status, true, out var statusEnum))
+            {
+                q = q.Where(t => t.Status == statusEnum);
+            }
+        }
         else
-            q = q.Where(t => (int)t.Status == status);
+        {
+            q = q.Where(t => t.Status != TaskStatus.Done);
+        }
 
-        // US13: сортування
         q = (sortBy?.ToLowerInvariant()) switch
         {
             "name" or "title" => q.OrderBy(t => t.Title),
@@ -51,10 +53,10 @@ public class AssignedController : ControllerBase
             Title = t.Title,
             Description = t.Description,
             DueDate = t.DueDate,
-            Status = t.Status,
+            Status = t.Status.ToString(), // ← КОНВЕРТУЄМО В STRING
             AssignedUserId = t.AssignedUserId,
             Tags = t.TaskTags
-                .Select(tt => new WebApiTagDto { Id = tt.TagId, Name = tt.Tag!.Name })
+                .Select(tt => new WebApi.Models.Tags.TagDto { Id = tt.TagId, Name = tt.Tag!.Name })
                 .ToList()
         }).ToListAsync();
     }

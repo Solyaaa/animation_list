@@ -14,6 +14,7 @@ public class ListsController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        ViewBag.BotName = "todo_listik_bot";
         // ✅ якщо токен зник (напр., сесія перезʼїхала) — редірект замість 401
         if (string.IsNullOrWhiteSpace(HttpContext.Session.GetString("access_token")))
             return RedirectToAction("Login", "Auth");

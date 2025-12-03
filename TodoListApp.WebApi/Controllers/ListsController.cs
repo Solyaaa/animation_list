@@ -18,31 +18,33 @@ public class ListsController : ControllerBase
     public ListsController(AppDbContext db) => _db = db;
 
     private string UserId => User.FindFirst("uid")?.Value ?? "";
-// GET /api/lists/{id}/tasks  ← викликає WebApp при натисканні "Open"
+
     [HttpGet("{id:int}/tasks")]
-    public async Task<ActionResult<IEnumerable<TodoListApp.WebApi.Models.Tasks.TaskItemDto>>> GetTasksInList(int id)
+    public async Task<ActionResult<IEnumerable<TaskItemDto>>> GetTasksInList(int id)
     {
         var tasks = await _db.TodoTasks
             .Include(t => t.TaskTags).ThenInclude(tt => tt.Tag)
             .Where(t => t.TodoListId == id)
-            .Select(t => new TodoListApp.WebApi.Models.Tasks.TaskItemDto
+            .Select(t => new TaskItemDto
             {
                 Id = t.Id,
                 TodoListId = t.TodoListId,
                 Title = t.Title,
                 Description = t.Description,
                 DueDate = t.DueDate,
-                Status = t.Status,
+                Status = t.Status.ToString(), // ← КОНВЕРТУЄМО В STRING
                 AssignedUserId = t.AssignedUserId,
                 Tags = t.TaskTags
-                    .Select(tt => new TodoListApp.WebApi.Models.Tags.TagDto { Id = tt.TagId, Name = tt.Tag!.Name })
+                    .Select(tt => new WebApi.Models.Tags.TagDto { Id = tt.TagId, Name = tt.Tag!.Name })
                     .ToList()
             })
             .ToListAsync();
 
-        // ВАЖЛИВО: навіть якщо списку фактично нема, повертаємо 200 з [] (щоб WebApp не падав)
         return Ok(tasks);
     }
+
+    // ... інші методи залишаються без змін ...
+
 // POST /api/lists/{id}/tasks
     // сигнатура
     [HttpPost("{id:int}/tasks")]

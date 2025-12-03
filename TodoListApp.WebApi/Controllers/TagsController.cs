@@ -19,7 +19,7 @@ public class TagsController(AppDbContext db) : ControllerBase
 
     // US17: теги задачі
     [HttpGet("tasks/{taskId:int}/tags")]
-    public async Task<IEnumerable<WebApiTagDto>> GetTaskTags(int taskId)
+    public async Task<IEnumerable<WebApi.Models.Tags.TagDto>> GetTaskTags(int taskId)
     {
         var ok = await db.TodoTasks.Include(t => t.TodoList)
             .AnyAsync(t => t.Id == taskId && (t.TodoList!.OwnerId == UserId || t.AssignedUserId == UserId));
@@ -149,7 +149,7 @@ public class TagsController(AppDbContext db) : ControllerBase
                 Title = t.Title,
                 Description = t.Description,
                 DueDate = t.DueDate,
-                Status = t.Status,
+                Status = t.Status.ToString(),
                 AssignedUserId = t.AssignedUserId,
                 Tags = t.TaskTags.Select(tt => new WebApiTagDto { Id = tt.TagId, Name = tt.Tag!.Name }).ToList()
             })

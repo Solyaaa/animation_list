@@ -3,8 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TodoListApp.Infrastructure.Persistence;
 using TodoListApp.WebApi.Models.Tasks;
-using TodoListApp.WebApi.Models.Tags;
-using WebApiTagDto = TodoListApp.WebApi.Models.Tags.TagDto;
 
 namespace TodoListApp.WebApi.Controllers;
 
@@ -13,7 +11,6 @@ namespace TodoListApp.WebApi.Controllers;
 [Route("api")]
 public class SearchController(AppDbContext db) : ControllerBase
 {
-    // GET /api/search?title=&createdFrom=&dueTo=
     [HttpGet("search")]
     public async Task<IEnumerable<TaskItemDto>> Search(
         [FromQuery] string? title,
@@ -42,11 +39,12 @@ public class SearchController(AppDbContext db) : ControllerBase
                 Title = t.Title,
                 Description = t.Description,
                 DueDate = t.DueDate,
-                Status = t.Status,
+                Status = t.Status.ToString(), // ← КОНВЕРТУЄМО В STRING
                 AssignedUserId = t.AssignedUserId,
-                Tags = t.TaskTags.Select(tt => new WebApiTagDto
+                Tags = t.TaskTags.Select(tt => new WebApi.Models.Tags.TagDto
                 {
-                    Id = tt.TagId, Name = tt.Tag!.Name
+                    Id = tt.TagId,
+                    Name = tt.Tag!.Name
                 }).ToList()
             })
             .ToListAsync();

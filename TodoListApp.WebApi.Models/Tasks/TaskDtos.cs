@@ -1,6 +1,7 @@
+// TaskDtos.cs - виправлена версія
+using System.Text.Json.Serialization;
 using TodoListApp.Domain.Entities;
 using TodoListApp.WebApi.Models.Tags;
-using TaskStatus = TodoListApp.Domain.Entities.TaskStatus;
 
 namespace TodoListApp.WebApi.Models.Tasks;
 
@@ -11,11 +12,24 @@ public class TaskItemDto
     public string Title { get; set; } = "";
     public string? Description { get; set; }
     public DateTime? DueDate { get; set; }
-    public TaskStatus Status { get; set; }
-    public string AssignedUserId { get; set; } = "";
-    public bool IsOverdue => DueDate.HasValue && DueDate.Value.Date < DateTime.UtcNow.Date && Status != TaskStatus.Done;
 
-    public List<TagDto> Tags { get; set; } = new(); // <- ДОДАНО
+    // STRING, не enum
+    public string Status { get; set; } = "";
+
+    public string AssignedUserId { get; set; } = "";
+
+    // Властивість для обчислення
+    public bool IsOverdue
+    {
+        get
+        {
+            if (!DueDate.HasValue) return false;
+            if (Status?.ToLower() == "done") return false;
+            return DueDate.Value.Date < DateTime.UtcNow.Date;
+        }
+    }
+
+    public List<TagDto> Tags { get; set; } = new();
 }
 
 public class CreateTaskDto
@@ -26,13 +40,15 @@ public class CreateTaskDto
     public int ListId { get; set; }
 }
 
+// Оновіть UpdateTaskDto теж
 public class UpdateTaskDto
 {
     public string Title { get; set; } = "";
     public string? Description { get; set; }
     public DateTime? DueDate { get; set; }
-    public TaskStatus Status { get; set; }
+
+    // Теж string
+    public string Status { get; set; } = "";
+
     public string? AssignedUserId { get; set; }
 }
-
-
