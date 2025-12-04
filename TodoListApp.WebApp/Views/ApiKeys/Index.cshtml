@@ -1,0 +1,144 @@
+@* Views/ApiKeys/Index.cshtml *@
+@{
+    ViewData["Title"] = "API Key для Telegram бота";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fab fa-telegram me-2"></i>API Key для Telegram бота
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (TempData["InfoMessage"] != null)
+                    {
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            @TempData["InfoMessage"]
+                        </div>
+                    }
+
+                    <div class="mb-4">
+                        <h6 class="mb-3">📋 Інструкція:</h6>
+                        <div class="step mb-3">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <strong>Згенеруйте API ключ</strong>
+                                <p class="small mb-0">
+                                    Використовуйте Swagger UI або Postman:<br>
+                                    <code>POST /api/apikeys</code> з тілом: <code>{"name": "Telegram Bot"}</code>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="step mb-3">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <strong>Знайдіть Telegram бота</strong>
+                                <p class="small mb-0">Пошукайте <strong>@ViewBag.BotName</strong> у Telegram</p>
+                            </div>
+                        </div>
+                        <div class="step mb-3">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <strong>Надішліть команду</strong>
+                                <div class="mt-1">
+                                    <code class="bg-light p-2 rounded d-block">
+                                        /link ВАШ_API_КЛЮЧ
+                                    </code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Важливо!</h6>
+                        <p class="small mb-2">
+                            1. Збережіть API ключ після генерації - його покажуть тільки один раз<br>
+                            2. Ключ виглядає так: <code>tk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code><br>
+                            3. Один ключ можна використовувати тільки для одного Telegram акаунта
+                        </p>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="/swagger" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt me-2"></i>Відкрити Swagger для генерації ключа
+                        </a>
+                        <a href="/Lists" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Назад до списків
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Посилання на Swagger -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-book me-2"></i>Документація API</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small mb-3">
+                        Для генерації API ключа використовуйте наш Swagger UI або будь-який інший HTTP клієнт.
+                    </p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Swagger UI</h6>
+                                    <p class="card-text small">Інтерактивна документація з можливістю тестування API</p>
+                                    <a href="/swagger" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        Відкрити
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Postman/curl</h6>
+                                    <p class="card-text small">Приклад запиту:</p>
+                                    <code class="small d-block bg-dark text-light p-2 rounded">
+POST /api/apikeys<br>
+Authorization: Bearer YOUR_TOKEN<br>
+Content-Type: application/json<br>
+<br>
+{"name": "Telegram Bot"}
+                                    </code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .step {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .step-number {
+        background: #0088cc;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }
+
+    .step-content {
+        flex: 1;
+    }
+</style>

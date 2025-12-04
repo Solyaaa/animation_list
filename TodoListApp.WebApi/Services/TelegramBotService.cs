@@ -19,7 +19,6 @@ public interface ITelegramBotService
     Task SendNotificationAsync(long telegramUserId, string message);
     Task CheckDeadlinesAsync();
 
-    // Нові методи для нагадувань
     Task<string?> SetReminderAsync(long telegramUserId, int taskId, DateTime reminderTime, string repeatInterval = "none");
     Task<string?> ListRemindersAsync(long telegramUserId);
     Task<string?> DeleteReminderAsync(long telegramUserId, int reminderId);
@@ -156,6 +155,41 @@ public class TelegramBotService : ITelegramBotService
             await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation("Successfully linked Telegram user {TelegramUserId} via command", telegramUserId);
+
+
+            await SendLinkedSuccessPhotoAsync(telegramUserId);
+
+
+            await Task.Delay(1000);
+
+
+            await SendNotificationAsync(telegramUserId,
+                "🎉 Вітаємо з успішною прив'язкою!\n\n" +
+                "✅ Ваші можливості:\n" +
+                "• Перегляд всіх завдань\n" +
+                "• Створення нових завдань\n" +
+                "• Нагадування та дедлайни\n" +
+                "• Пошук та редагування\n\n" +
+                "👇 Щоб почати:\n" +
+                "• Натисніть /start для кнопок\n" +
+                "• Або /help< для допомоги");
+
+
+            await Task.Delay(1500);
+
+            var buttons = new List<List<string>>
+            {
+                new List<string> { "Всі завдання", "На сьогодні" },
+                new List<string> { "Прострочені", "Майбутні" },
+                new List<string> { "Нове завдання", "Мої списки" },
+                new List<string> { "Знайти за ID", "Нагадування" }
+            };
+
+            await SendMessageWithButtonsAsync(telegramUserId,
+                "🚀 Ваш TodoList готовий до роботи!\n\n" +
+                "Оберіть дію з кнопок нижче:",
+                buttons);
+
             return true;
         }
         catch (Exception ex)
@@ -165,39 +199,155 @@ public class TelegramBotService : ITelegramBotService
         }
     }
 
-    public async Task<string?> ProcessMessageAsync(long telegramUserId, string message)
+    private async Task SendWelcomePhotoAndInstructionsAsync(long telegramUserId)
     {
         try
         {
-            _logger.LogInformation("Processing message from {UserId}: {Message}", telegramUserId, message);
 
-            var telegramUser = await _dbContext.TelegramUsers
-                .Include(t => t.AppUser)
-                .Include(t => t.ApiKey)
-                .FirstOrDefaultAsync(t => t.TelegramUserId == telegramUserId);
+            await SendWelcomePhotoAsync(telegramUserId);
 
-            if (telegramUser == null)
+
+            await Task.Delay(1000);
+
+
+            await SendNotificationAsync(telegramUserId,
+                "✅ <b>Акаунт успішно зв'язано!</b>\n\n" +
+                "Натисніть /start для появи кнопок або /help для допомоги.");
+
+
+            await Task.Delay(1500);
+
+
+            var buttons = new List<List<string>>
             {
-                return "Будь ласка, спочатку зв'яжіть ваш акаунт. Використайте команду /apikey YOUR_API_KEY";
-            }
+                new List<string> { "Всі", "Сьогодні", "Прострочені", "Майбутні" },
+                new List<string> { "Нове завдання", "Мої списки" },
+                new List<string> { "Знайти за ID", "Мої нагадування" },
+                new List<string> { "/start", "/help", "/commands" }
+            };
 
-            telegramUser.LastActivity = DateTime.UtcNow;
-            await _dbContext.SaveChangesAsync();
-
-            if (message.StartsWith("/"))
-            {
-                return await ProcessCommandAsync(telegramUser, message);
-            }
-
-            return await ProcessTextMessageAsync(telegramUser, message);
+            await SendMessageWithButtonsAsync(telegramUserId,
+                "🎯 Готово до роботи!\n\n" +
+                "Оберіть дію з кнопок нижче або використовуйте команди:",
+                buttons);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing message from {UserId}", telegramUserId);
-            return "Сталася помилка. Спробуйте ще раз.";
+            _logger.LogError(ex, "Error sending welcome instructions to {UserId}", telegramUserId);
+
+
+            await SendNotificationAsync(telegramUserId,
+                "✅ Акаунт успішно зв'язано!\n\n" +
+                "Натисніть /start для появи кнопок або /help для допомоги.");
         }
     }
 
+    public async Task<string?> ProcessMessageAsync(long telegramUserId, string message)
+{
+    try
+    {
+        _logger.LogInformation("Processing message from {UserId}: {Message}", telegramUserId, message);
+
+        var telegramUser = await _dbContext.TelegramUsers
+            .Include(t => t.AppUser)
+            .Include(t => t.ApiKey)
+            .FirstOrDefaultAsync(t => t.TelegramUserId == telegramUserId);
+
+
+        if (message.Trim().ToLower().StartsWith("/link") ||
+            message.Trim().ToLower().StartsWith("/apikey"))
+        {
+            return await ProcessLinkCommand(telegramUserId, message);
+        }
+
+        if (telegramUser == null)
+        {
+
+            if (message.Trim().ToLower() == "/start")
+            {
+
+                await SendWelcomePhotoAsync(telegramUserId);
+                await Task.Delay(1000);
+
+                return "👋 Ласкаво просимо до TodoList Bot!\n\n" +
+                       "Щоб почати користуватися ботом, зв'яжіть ваш акаунт:\n\n" +
+                       "1. Згенеруйте API ключ у веб-версії\n" +
+                       "2. Використайте команду:\n" +
+                       "/link ВАШ_API_КЛЮЧ\n\n" +
+                       "Або надішліть /help для інших команд.";
+            }
+
+            if (message.Trim().ToLower() == "/clear" ||
+                message.Trim().ToLower() == "/reset")
+            {
+                return "❌ У вас ще немає прив'язаного акаунту.\n" +
+                       "Спочатку зв'яжіть акаунт командою /link API_KEY";
+            }
+
+            return "Будь ласка, спочатку зв'яжіть ваш акаунт. Використайте команду /link YOUR_API_KEY\n\n" +
+                   "Або надішліть /start для вітання.";
+        }
+
+        telegramUser.LastActivity = DateTime.UtcNow;
+        await _dbContext.SaveChangesAsync();
+
+        if (message.StartsWith("/"))
+        {
+            return await ProcessCommandAsync(telegramUser, message);
+        }
+
+        return await ProcessTextMessageAsync(telegramUser, message);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error processing message from {UserId}", telegramUserId);
+        return "Сталася помилка. Спробуйте ще раз.";
+    }
+}
+
+
+private async Task<string?> ProcessLinkCommand(long telegramUserId, string message)
+{
+    try
+    {
+        var parts = message.Split(' ');
+        if (parts.Length < 2)
+        {
+            return "Використовуйте: /link YOUR_API_KEY";
+        }
+
+        var apiKey = parts[1];
+
+
+        string? telegramUsername = null;
+        try
+        {
+
+        }
+        catch { }
+
+        var result = await LinkWithApiKey(telegramUserId, telegramUsername, apiKey);
+
+        if (result)
+        {
+
+            return null;
+        }
+        else
+        {
+            return "❌ Невірний API ключ або ключ неактивний.\n" +
+                   "Перевірте:\n" +
+                   "1. Чи правильний ключ\n" +
+                   "2. Чи активний ключ\n" +
+                   "3. Чи не прострочений ключ";
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error processing /link command");
+        return "Помилка при обробці команди /link";
+    }
+}
     private async Task<string?> ProcessCommandAsync(TelegramUser telegramUser, string command)
     {
         var parts = command.ToLower().Split(' ');
@@ -206,29 +356,55 @@ public class TelegramBotService : ITelegramBotService
         switch (mainCommand)
         {
             case "/start":
-                return "Ласкаво просимо до TodoList Bot! 🎯\n\n" +
-                       "Доступні команди:\n" +
-                       "/link KEY - Зв'язати з акаунтом\n" +
-                       "/tasks - Активні завдання\n" +
-                       "/tasks today - Завдання на сьогодні\n" +
-                       "/tasks overdue - Прострочені завдання\n" +
-                       "/tasks upcoming - Майбутні завдання\n" +
-                       "/create Назва | Опис | 2024-12-31 - Створити завдання\n" +
-                       "/edit ID [title|desc|due|status] VALUE - Редагувати\n" +
-                       "/delete ID - Видалити завдання\n" +
-                       "/complete ID - Завершити завдання\n" +
-                       "/lists - Мої списки\n" +
-                       "/help - Допомога";
 
+                var buttons = new List<List<string>>
+                {
+                    new List<string> { "Всі завдання", "На сьогодні" },
+                    new List<string> { "Прострочені", "Майбутні" },
+                    new List<string> { "Нове завдання", "Мої списки" },
+                    new List<string> { "Знайти за ID", "Мої нагадування" },
+                    new List<string> { "Допомога", "Команди" }
+                };
+
+                await SendMessageWithButtonsAsync(telegramUser.TelegramUserId,
+                    "📱 <b>Головне меню TodoList Bot</b>\n\n" +
+                    "Оберіть дію з кнопок нижче ⬇️",
+                    buttons);
+
+                return null;
+
+            case "/welcome":
+
+                await SendWelcomePhotoAsync(telegramUser.TelegramUserId);
+                return "👋 Вітальне фото відправлено!";
+
+            case "/linked":
+
+                await SendLinkedSuccessPhotoAsync(telegramUser.TelegramUserId);
+                return "✅ Фото підтвердження відправлено!";
             case "/help":
-                return "📖 **Доступні команди:**\n\n" +
+                return "📱 **TodoList Telegram Bot**\n\n" +
+                       "👇 **Швидкі кнопки:**\n\n" +
+                       "📋 *Завдання:*\n" +
+                       "`[Всі]` `[Сьогодні]` `[Прострочені]` `[Майбутні]`\n\n" +
+                       "➕ *Створити:*\n" +
+                       "`[Нове завдання]`\n\n" +
+                       "🔍 *Пошук:*\n" +
+                       "`[Знайти за ID]` `[Знайти за назвою]`\n\n" +
+                       "⚡ *Швидкі дії:*\n" +
+                       "`[Мої списки]` `[Мої нагадування]`\n\n" +
+                       "📖 *Повна допомога:*\n" +
+                       "Надішліть `/commands` для повного списку";
+
+            case "/commands":
+                return "📖 **Повний список команд:**\n\n" +
                        "📋 *Завдання:*\n" +
                        "`/tasks` - Активні завдання\n" +
                        "`/tasks today` - На сьогодні\n" +
                        "`/tasks overdue` - Прострочені\n" +
                        "`/tasks upcoming` - Майбутні\n" +
                        "`/create Назва | Опис | 2024-12-31` - Створити\n" +
-                       "`/find ID/назва` - Знайти завдання\n\n" +
+                       "`/find ID` або `/find назва` - Знайти завдання\n\n" +
                        "✏️ *Редагування:*\n" +
                        "`/edit #ID title Нова назва`\n" +
                        "`/edit #ID due 2024-12-31`\n" +
@@ -236,11 +412,11 @@ public class TelegramBotService : ITelegramBotService
                        "`/complete #ID` - Завершити\n" +
                        "`/delete #ID` - Видалити\n\n" +
                        "🔔 *Нагадування:*\n" +
-                       "`/remind #ID HH:mm` - Нагадати о 15:30\n" +
+                       "`/remind #ID HH:mm` - Нагадати\n" +
                        "`/remind #ID 09:00 daily` - Щодня\n" +
                        "`/remind #ID 10:00 weekly` - Щотижня\n" +
                        "`/reminders` - Мої нагадування\n" +
-                       "`/unremind ID` - Видалити нагадування\n\n" +
+                       "`/unremind ID` - Видалити\n\n" +
                        "📁 *Списки:*\n" +
                        "`/lists` - Мої списки\n\n" +
                        "🔢 *ID* завдання вказано як `#число` в `/tasks`";
@@ -279,6 +455,20 @@ public class TelegramBotService : ITelegramBotService
                     return await GetUserTasksAsync(telegramUser, filter);
                 }
                 return await GetUserTasksAsync(telegramUser, "all");
+            case "/reset":
+            case "/clear":
+                // Видалити користувача з бази
+                var userToDelete = await _dbContext.TelegramUsers
+                    .FirstOrDefaultAsync(t => t.TelegramUserId == telegramUser.TelegramUserId);
+
+                if (userToDelete != null)
+                {
+                    _dbContext.TelegramUsers.Remove(userToDelete);
+                    await _dbContext.SaveChangesAsync();
+
+                    return "✅ Ваш акаунт відв'язано! Надішліть /start знову для вітання.";
+                }
+                return "❌ Акаунт не знайдено.";
 
             case "/create":
                 if (command.Length > "/create".Length)
@@ -291,7 +481,7 @@ public class TelegramBotService : ITelegramBotService
             case "/edit":
                 if (parts.Length >= 4)
                 {
-                    // Підтримка формату /edit #ID та /edit ID
+
                     var idPart = parts[1];
                     if (idPart.StartsWith("#"))
                     {
@@ -422,6 +612,122 @@ public class TelegramBotService : ITelegramBotService
             return $"Помилка: {ex.Message}";
         }
     }
+
+    private async Task SendMessageWithButtonsAsync(long chatId, string text, List<List<string>> buttonRows)
+    {
+        try
+        {
+            var url = $"https://api.telegram.org/bot{_config.BotToken}/sendMessage";
+
+            var keyboard = new
+            {
+                keyboard = buttonRows.Select(row =>
+                    row.Select(button => new { text = button })
+                        .ToArray()
+                ).ToArray(),
+                resize_keyboard = true,
+                one_time_keyboard = false
+            };
+
+            var payload = new
+            {
+                chat_id = chatId,
+                text = text,
+                parse_mode = "Markdown",
+                reply_markup = keyboard
+            };
+
+            await _httpClient.PostAsJsonAsync(url, payload);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending message with buttons");
+        }
+    }
+
+    private async Task<string?> ProcessTextMessageAsync(TelegramUser telegramUser, string message)
+{
+
+    var normalizedMessage = message.Trim().ToLower();
+
+
+    var buttonMapping = new Dictionary<string, Func<Task<string?>>>
+    {
+
+        ["всі"] = () => GetUserTasksAsync(telegramUser, "all"),
+        ["всі завдання"] = () => GetUserTasksAsync(telegramUser, "all"),
+        ["завдання"] = () => GetUserTasksAsync(telegramUser, "all"),
+
+        ["сьогодні"] = () => GetUserTasksAsync(telegramUser, "today"),
+        ["на сьогодні"] = () => GetUserTasksAsync(telegramUser, "today"),
+        ["сьогоднішні"] = () => GetUserTasksAsync(telegramUser, "today"),
+
+        ["прострочені"] = () => GetUserTasksAsync(telegramUser, "overdue"),
+        ["прострочено"] = () => GetUserTasksAsync(telegramUser, "overdue"),
+
+        ["майбутні"] = () => GetUserTasksAsync(telegramUser, "upcoming"),
+        ["майбутні завдання"] = () => GetUserTasksAsync(telegramUser, "upcoming"),
+
+
+        ["нове завдання"] = () => Task.FromResult<string?>(
+            "Щоб створити завдання, використовуйте:\n" +
+            "`/create Назва | Опис | 2024-12-31`\n\n" +
+            "Приклад:\n" +
+            "`/create Купити молоко | 2 пакети | 2025-12-05`"),
+
+
+        ["знайти"] = () => Task.FromResult<string?>(
+            "🔍 Пошук завдань\n\n" +
+            "• За ID: `/find 15`\n" +
+            "• За назвою: `/find молоко`\n" +
+            "• За описом: `/find опис`"),
+        ["знайти за id"] = () => Task.FromResult<string?>(
+            "Введіть ID завдання:\n`/find 15`"),
+        ["пошук"] = () => Task.FromResult<string?>(
+            "Для пошуку використовуйте команду `/find`"),
+
+
+        ["мої списки"] = () => GetUserListsAsync(telegramUser),
+        ["списки"] = () => GetUserListsAsync(telegramUser),
+        ["категорії"] = () => GetUserListsAsync(telegramUser),
+
+
+        ["мої нагадування"] = () => ListRemindersAsync(telegramUser.TelegramUserId),
+        ["нагадування"] = () => ListRemindersAsync(telegramUser.TelegramUserId),
+        ["нагади"] = () => ListRemindersAsync(telegramUser.TelegramUserId),
+        ["реміндери"] = () => ListRemindersAsync(telegramUser.TelegramUserId),
+
+
+        ["допомога"] = () => ProcessCommandAsync(telegramUser, "/help"),
+        ["help"] = () => ProcessCommandAsync(telegramUser, "/help"),
+        ["доп"] = () => ProcessCommandAsync(telegramUser, "/help"),
+
+        ["команди"] = () => ProcessCommandAsync(telegramUser, "/commands"),
+        ["всі команди"] = () => ProcessCommandAsync(telegramUser, "/commands"),
+
+
+        ["як прив'язати акаунт?"] = () => Task.FromResult<string?>(
+            "📋 Інструкція по прив'язці:\n\n" +
+            "1. Згенеруйте API ключ у веб-версії\n" +
+            "2. Скопіюйте ключ\n" +
+            "3. Надішліть:\n" +
+            "/link ВАШ_КЛЮЧ")
+    };
+
+
+    if (buttonMapping.TryGetValue(normalizedMessage, out var handler))
+    {
+        return await handler();
+    }
+
+
+    if (message.Contains("|"))
+    {
+        return await CreateTaskFromTextAsync(telegramUser, message);
+    }
+
+    return "Не розпізнано команду. Надішліть `/help` для допомоги або виберіть одну з кнопок.";
+}
 public async Task<string?> SetReminderAsync(long telegramUserId, int taskId, DateTime reminderTime, string repeatInterval = "none")
 {
     try
@@ -433,7 +739,7 @@ public async Task<string?> SetReminderAsync(long telegramUserId, int taskId, Dat
         if (telegramUser == null || telegramUser.ApiKey == null)
             return "Помилка: Користувач не знайдений";
 
-        // Перевіряємо завдання
+
         _httpClient.DefaultRequestHeaders.Remove("X-API-Key");
         _httpClient.DefaultRequestHeaders.Add("X-API-Key", telegramUser.ApiKey.Key);
 
@@ -448,19 +754,15 @@ public async Task<string?> SetReminderAsync(long telegramUserId, int taskId, Dat
         if (task == null)
             return "Завдання не знайдено";
 
-        // ВАЖЛИВО: конвертуємо локальний час в UTC
-        // Якщо reminderTime вже в UTC, не конвертуйте
-        // Якщо reminderTime в локальному часі користувача:
+
         var reminderTimeUtc = reminderTime.ToUniversalTime();
 
-        // Або якщо час вказано в локальному часі сервера:
-        // var reminderTimeUtc = TimeZoneInfo.ConvertTimeToUtc(reminderTime, TimeZoneInfo.Local);
 
         var reminder = new TelegramReminder
         {
             TelegramUserId = telegramUserId,
             TodoTaskId = taskId,
-            ReminderTime = reminderTimeUtc, // ← ЗБЕРІГАЄМО UTC
+            ReminderTime = reminderTimeUtc,
             Message = $"⏰ Нагадування: {task.Title}",
             RepeatInterval = repeatInterval,
             NextReminder = repeatInterval != "none" ? CalculateNextReminder(reminderTimeUtc, repeatInterval) : null,
@@ -522,7 +824,7 @@ public async Task<string?> ListRemindersAsync(long telegramUserId)
             var repeatIcon = reminder.RepeatInterval != "none" ? "🔁" : "";
             var timeText = reminder.ReminderTime.ToString("HH:mm dd.MM.yyyy");
 
-            // Використовуємо ID завдання без API викликів
+
             sb.AppendLine($"\n`#{reminder.Id}` {statusIcon}{repeatIcon} Завдання #{reminder.TodoTaskId}");
             sb.AppendLine($"   🕐 {timeText}");
 
@@ -568,6 +870,71 @@ public async Task<string?> DeleteReminderAsync(long telegramUserId, int reminder
         return "Помилка при видаленні нагадування";
     }
 }
+private async Task<bool> SendWelcomePhotoAsync(long telegramUserId)
+{
+    try
+    {
+
+        var imagePath = "../TodoListApp.WebApp/wwwroot/images/welcome-bot.jpg";
+
+
+        return await SendLocalPhoto(telegramUserId, imagePath,
+            "👋 <b>WELCOME TO YOUR TO-DO LIST BOT</b>\n\nOrganize, Prioritize, Achieve.");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error sending welcome photo");
+        return false;
+    }
+}
+
+private async Task<bool> SendLinkedSuccessPhotoAsync(long telegramUserId)
+{
+    try
+    {
+
+        var imagePath = "../TodoListApp.WebApp/wwwroot/images/linked-bot.jpg";
+
+
+
+        return await SendLocalPhoto(telegramUserId, imagePath,
+            "✅ <b>АКАУНТ УСПІШНО ЗВ'ЯЗАНО!</b>\n\nПочинайте працювати з вашим TodoList!");
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error sending linked success photo");
+        return false;
+    }
+}
+
+
+private async Task<bool> SendLocalPhoto(long telegramUserId, string imagePath, string caption)
+{
+    try
+    {
+        var imageBytes = await File.ReadAllBytesAsync(imagePath);
+
+        var url = $"https://api.telegram.org/bot{_config.BotToken}/sendPhoto";
+
+        using var form = new MultipartFormDataContent();
+        using var imageContent = new ByteArrayContent(imageBytes);
+
+        imageContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+
+        form.Add(new StringContent(telegramUserId.ToString()), "chat_id");
+        form.Add(new StringContent(caption), "caption");
+        form.Add(new StringContent("HTML"), "parse_mode");
+        form.Add(imageContent, "photo", Path.GetFileName(imagePath));
+
+        var response = await _httpClient.PostAsync(url, form);
+        return response.IsSuccessStatusCode;
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error sending local photo");
+        return false;
+    }
+}
 public async Task CheckAndSendRemindersAsync()
 {
     try
@@ -575,7 +942,7 @@ public async Task CheckAndSendRemindersAsync()
         var now = DateTime.UtcNow;
         var checkWindowStart = now.AddMinutes(-5); // Допуск 5 хвилин назад
 
-        // Знаходимо всі нагадування, які мали спрацювати в останні 5 хвилин
+
         var reminders = await _dbContext.TelegramReminders
             .Where(r => !r.IsSent &&
                         r.ReminderTime <= now &&
@@ -589,7 +956,6 @@ public async Task CheckAndSendRemindersAsync()
         {
             try
             {
-                // Отримуємо інформацію про завдання через API
                 var taskTitle = await GetTaskTitleAsync(reminder.TelegramUserId, reminder.TodoTaskId);
 
                 var message = $"🔔 **Нагадування!**\n\n" +
@@ -599,11 +965,10 @@ public async Task CheckAndSendRemindersAsync()
 
                 await SendNotificationAsync(reminder.TelegramUserId, message);
 
-                // Оновлюємо статус
+
                 reminder.IsSent = true;
                 reminder.SentAt = now;
 
-                // Якщо повторюване нагадування
                 if (reminder.RepeatInterval != "none" && reminder.NextReminder.HasValue)
                 {
                     var nextReminder = new TelegramReminder
@@ -637,7 +1002,7 @@ public async Task CheckAndSendRemindersAsync()
     }
 }
 
-// Допоміжний метод для отримання назви завдання
+
 private async Task<string> GetTaskTitleAsync(long telegramUserId, int taskId)
 {
     try
@@ -679,7 +1044,7 @@ private async Task<string?> FindTaskAsync(TelegramUser telegramUser, string sear
         _httpClient.DefaultRequestHeaders.Remove("X-API-Key");
         _httpClient.DefaultRequestHeaders.Add("X-API-Key", telegramUser.ApiKey.Key);
 
-        // Отримуємо всі завдання
+
         var tasksResponse = await _httpClient.GetAsync("/api/tasks/my-assigned");
         if (!tasksResponse.IsSuccessStatusCode)
             return "Не вдалося отримати завдання";
@@ -688,17 +1053,17 @@ private async Task<string?> FindTaskAsync(TelegramUser telegramUser, string sear
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var tasks = JsonSerializer.Deserialize<List<SimpleTaskDto>>(jsonString, options) ?? new();
 
-        // Шукаємо за ID або назві
+
         var foundTasks = new List<SimpleTaskDto>();
 
         if (int.TryParse(searchTerm, out var searchId))
         {
-            // Пошук за ID
+
             foundTasks = tasks.Where(t => t.Id == searchId).ToList();
         }
         else
         {
-            // Пошук за назвою
+
             foundTasks = tasks.Where(t =>
                 t.Title.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
                 (t.Description != null && t.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
@@ -896,15 +1261,6 @@ private async Task<string?> FindTaskAsync(TelegramUser telegramUser, string sear
     }
 }
 
-    private async Task<string?> ProcessTextMessageAsync(TelegramUser telegramUser, string message)
-    {
-        if (message.Contains("|"))
-        {
-            return await CreateTaskFromTextAsync(telegramUser, message);
-        }
-
-        return "Не розпізнано команду. Використайте /help для допомоги.";
-    }
 
     private async Task<string?> CreateTaskFromTextAsync(TelegramUser telegramUser, string text)
     {

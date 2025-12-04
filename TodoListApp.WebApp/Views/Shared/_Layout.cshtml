@@ -1,8 +1,4 @@
 ﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
-
-@functions {
-    private object todo_listik_bot;
-}
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -15,56 +11,118 @@
         .overdue { background: #ffe0e0; }
         .tag-badge { margin-right: .25rem; }
         .navbar-brand { font-weight: 700; letter-spacing: .3px; }
-        
-        /* Telegram мінімалістичні стилі */
+
+        /* Telegram стилі */
         .telegram-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
+            background: linear-gradient(135deg, #f8fdff, #e8f7ff);
+            border-radius: 15px;
+            padding: 30px;
             margin: 30px 0;
-            border: 1px solid #e3e6f0;
+            border: 2px solid #e3f2fd;
+            box-shadow: 0 4px 12px rgba(0, 136, 204, 0.1);
         }
-        
+
         .telegram-title {
             color: #0088cc;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.3rem;
         }
-        
-        .qr-code {
-            width: 150px;
-            height: 150px;
-            background: white;
-            border: 2px solid #e3e6f0;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto;
-        }
-        
-        .qr-code i {
-            font-size: 60px;
-            color: #0088cc;
-        }
-        
+
         .telegram-step {
             margin-bottom: 15px;
             padding-left: 20px;
             border-left: 3px solid #0088cc;
         }
-        
+
         .telegram-step-number {
             background: #0088cc;
             color: white;
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
+            font-size: 0.9rem;
             font-weight: bold;
-            margin-right: 10px;
+            margin-right: 12px;
+        }
+
+        .bot-btn-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .bot-btn {
+            background: white;
+            border: 2px solid #e3f2fd;
+            border-radius: 10px;
+            padding: 12px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70px;
+        }
+
+        .bot-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 136, 204, 0.15);
+            border-color: #0088cc;
+            background: #f0f9ff;
+        }
+
+        .bot-btn i {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .bot-btn .btn-text {
+            font-size: 0.8rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .qr-container {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            border: 2px solid #e3f2fd;
+        }
+
+        .qr-code {
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        .btn-telegram {
+            background: linear-gradient(135deg, #0088cc, #40b3e0);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 8px 20px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-telegram:hover {
+            background: linear-gradient(135deg, #0077b3, #2fa0cc);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 12px rgba(0, 136, 204, 0.2);
+        }
+
+        .text-telegram {
+            color: #0088cc;
         }
     </style>
 </head>
@@ -83,6 +141,11 @@
                 <li class="nav-item"><a class="nav-link" href="/Tags"><i class="fas fa-tags me-1"></i> Теги</a></li>
                 <li class="nav-item"><a class="nav-link" href="/My/Assigned"><i class="fas fa-user-check me-1"></i> Призначені</a></li>
                 <li class="nav-item"><a class="nav-link" href="/My/Search"><i class="fas fa-search me-1"></i> Пошук</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://localhost:7266/swagger/index.html" target="_blank">
+                        <i class="fas fa-code me-1"></i>WebAPI
+                    </a>
+                </li>
             </ul>
             <form class="d-flex" method="post" action="/Auth/Logout">
                 <button class="btn btn-outline-danger btn-sm" type="submit"><i class="fas fa-sign-out-alt me-1"></i> Вийти</button>
@@ -93,122 +156,208 @@
 
 <main class="container">
     @RenderBody()
-    
+
     <!-- Telegram секція на головній -->
-    @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Lists" && 
+    @if (ViewContext.RouteData.Values["controller"]?.ToString() == "Lists" &&
          ViewContext.RouteData.Values["action"]?.ToString() == "Index")
     {
         <div class="telegram-section mt-5">
             <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h5 class="telegram-title mb-3">
-                        <i class="fab fa-telegram me-2"></i>Для зручності маємо Telegram бота
-                    </h5>
-                    <p class="mb-4">Керуйте завданнями прямо з месенджера. Скануйте QR-код, генеруйте API ключ та користуйтесь!</p>
-                    
+                <div class="col-lg-8">
+                    <h4 class="telegram-title mb-3">
+                        <i class="fab fa-telegram me-2"></i>Керуйте завданнями з Telegram!
+                    </h4>
+                    <p class="mb-4">Додайте бота та керуйте завданнями прямо в месенджері. Бот підтримує вбудовану панель з кнопками!</p>
+
+                    <!-- Кнопки бота -->
                     <div class="mb-4">
-                        <h6 class="mb-3">Як почати:</h6>
+                        <h6 class="mb-3 text-telegram"><i class="fas fa-gamepad me-1"></i> Кнопки бота (Reply Keyboard):</h6>
+                        <div class="bot-btn-grid">
+                            <div class="bot-btn" onclick="showBotInfo('Всі')">
+                                <i class="fas fa-tasks text-primary"></i>
+                                <span class="btn-text">Всі завдання</span>
+                            </div>
+                            <div class="bot-btn" onclick="showBotInfo('Сьогодні')">
+                                <i class="fas fa-calendar-day text-success"></i>
+                                <span class="btn-text">Сьогодні</span>
+                            </div>
+                            <div class="bot-btn" onclick="showBotInfo('Прострочені')">
+                                <i class="fas fa-clock text-danger"></i>
+                                <span class="btn-text">Прострочені</span>
+                            </div>
+                            <div class="bot-btn" onclick="showBotInfo('Майбутні')">
+                                <i class="fas fa-calendar-plus text-info"></i>
+                                <span class="btn-text">Майбутні</span>
+                            </div>
+                            <div class="bot-btn" onclick="showBotInfo('Нове завдання')">
+                                <i class="fas fa-plus-circle text-warning"></i>
+                                <span class="btn-text">Нове завдання</span>
+                            </div>
+                            <div class="bot-btn" onclick="showBotInfo('Мої списки')">
+                                <i class="fas fa-list-check text-secondary"></i>
+                                <span class="btn-text">Мої списки</span>
+                            </div>
+                            <div class="bot-btn" onclick="showBotInfo('Знайти за ID')">
+                                <i class="fas fa-search text-telegram"></i>
+                                <span class="btn-text">Знайти за ID</span>
+                            </div>
+                            <div class="bot-btn" onclick="showBotInfo('Мої нагадування')">
+                                <i class="fas fa-bell text-telegram"></i>
+                                <span class="btn-text">Мої нагадування</span>
+                            </div>
+                        </div>
+                        <p class="small text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i> Ці кнопки з'являться в боті як панель інструментів під полем вводу
+                        </p>
+                    </div>
+
+                    <!-- Інструкція -->
+                    <div class="mb-4">
+                        <h6 class="mb-3 text-telegram"><i class="fas fa-graduation-cap me-1"></i> Як почати:</h6>
                         <div class="telegram-step">
-                            <span class="telegram-step-number">1</span>
-                            <strong>Отримайте API ключ</strong>
-                            <p class="small mb-0 text-muted">У розділі <a href="/ApiKeys" class="text-decoration-none">API Keys</a> створіть новий ключ</p>
+                            <div class="telegram-step-number">1</div>
+                            <div class="step-content">
+                                <strong>Відскануйте QR-код</strong>
+                                <p class="small mb-0">Додайте бота до Telegram</p>
+                            </div>
                         </div>
                         <div class="telegram-step">
-                            <span class="telegram-step-number">2</span>
-                            <strong>Відскануйте QR-код</strong>
-                            <p class="small mb-0 text-muted">Додайте бота до Telegram</p>
+                            <div class="telegram-step-number">2</div>
+                            <div class="step-content">
+                                <strong>Згенеруйте API ключ</strong>
+                                <p class="small mb-1">Через WebAPI:</p>
+                                <a href="https://localhost:7266/swagger/index.html" target="_blank" class="btn btn-telegram btn-sm">
+                                    <i class="fas fa-external-link-alt"></i> Відкрити WebAPI Swagger
+                                </a>
+                                <p class="small text-muted mt-1 mb-0">
+                                    Виконайте: <code>POST /api/apikeys</code> (без параметрів)
+                                </p>
+                            </div>
                         </div>
                         <div class="telegram-step">
-                            <span class="telegram-step-number">3</span>
-                            <strong>Зв'яжіть акаунт</strong>
-                            <p class="small mb-0 text-muted">Надішліть боту команду: <code>/link ВАШ_API_КЛЮЧ</code></p>
+                            <div class="telegram-step-number">3</div>
+                            <div class="step-content">
+                                <strong>Зв'яжіть акаунт</strong>
+                                <div class="mt-1">
+                                    <code class="bg-light p-2 rounded d-block font-monospace">
+                                        /link ВАШ_API_КЛЮЧ
+                                    </code>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex gap-2">
-                        <a href="/ApiKeys" class="btn btn-primary btn-sm">
-                            <i class="fas fa-key me-1"></i> Отримати API ключ
+
+                    <!-- Посилання -->
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <a href="#" onclick="showAllCommands()" class="btn btn-outline-telegram btn-sm">
+                            <i class="fas fa-terminal me-1"></i> Усі команди
                         </a>
-                        <a href="#" class="btn btn-outline-secondary btn-sm" onclick="showBotCommands()">
-                            <i class="fas fa-terminal me-1"></i> Команди бота
+                        <a href="https://t.me/list_dobot" target="_blank" class="btn btn-telegram btn-sm">
+                            <i class="fab fa-telegram me-1"></i> Відкрити в Telegram
+                        </a>
+                        <a href="https://localhost:7266/swagger/index.html" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-code me-1"></i> Swagger UI
                         </a>
                     </div>
                 </div>
-                <div class="col-md-4 text-center">
-                    <div class="qr-code mb-3">
-                        <i class="fab fa-telegram"></i>
+
+                <div class="col-lg-4 text-center mt-4 mt-lg-0">
+                    <div class="qr-container">
+                        <!-- Правильний QR код для list_dobot -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://t.me/list_dobot&format=png&margin=10&color=0088cc&bgcolor=ffffff"
+                             alt="Telegram Bot QR Code"
+                             class="img-fluid qr-code mb-3">
+                        <p class="small text-muted mb-2">
+                            <i class="fas fa-qrcode me-1"></i>
+                            Скануйте камерою
+                        </p>
+                        <p class="mb-0">
+                            <i class="fab fa-telegram me-1 text-telegram"></i>
+                            <strong>list_dobot</strong>
+                        </p>
+                        <p class="small text-muted">
+                            або пошукайте в Telegram
+                        </p>
                     </div>
-                    <p class="small text-muted mb-2">Скануйте щоб додати бота</p>
-                    <p class="small">
-                        <i class="fas fa-robot me-1"></i>
-                        <strong>@ViewBag.BotName</strong>
-                    </p>
+
+                    <!-- Швидкі посилання -->
+                    <div class="mt-3">
+                        <a href="https://t.me/list_dobot" target="_blank"
+                           class="btn btn-telegram btn-sm w-100 mb-2">
+                            <i class="fab fa-telegram me-1"></i> Перейти до бота
+                        </a>
+                        <p class="small text-muted mt-1">
+                            Після додавання натисніть /start для появи кнопок
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     }
 </main>
 
-<!-- Модальне вікно з командами бота -->
-<div class="modal fade" id="botCommandsModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Модальне вікно з усіма командами -->
+<div class="modal fade" id="allCommandsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-telegram text-white">
                 <h5 class="modal-title">
-                    <i class="fab fa-telegram me-2"></i>Команди Telegram бота
+                    <i class="fab fa-telegram me-2"></i>Усі команди Telegram бота
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <tbody>
-                            <tr>
-                                <td><code>/start</code></td>
-                                <td>Початок роботи</td>
-                            </tr>
-                            <tr>
-                                <td><code>/help</code></td>
-                                <td>Допомога</td>
-                            </tr>
-                            <tr>
-                                <td><code>/link API_KEY</code></td>
-                                <td>Зв'язати акаунт</td>
-                            </tr>
-                            <tr>
-                                <td><code>/tasks</code></td>
-                                <td>Всі завдання</td>
-                            </tr>
-                            <tr>
-                                <td><code>/tasks today</code></td>
-                                <td>Завдання на сьогодні</td>
-                            </tr>
-                            <tr>
-                                <td><code>/create Назва | Опис</code></td>
-                                <td>Нове завдання</td>
-                            </tr>
-                            <tr>
-                                <td><code>/remind #ID 15:30</code></td>
-                                <td>Нагадування</td>
-                            </tr>
-                            <tr>
-                                <td><code>/edit #ID title ...</code></td>
-                                <td>Редагування</td>
-                            </tr>
-                            <tr>
-                                <td><code>/complete #ID</code></td>
-                                <td>Завершити</td>
-                            </tr>
-                            <tr>
-                                <td><code>/lists</code></td>
-                                <td>Списки</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-tasks me-2 text-telegram"></i>Завдання</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><code>/tasks</code> <span class="text-muted">- Активні завдання</span></li>
+                            <li class="mb-2"><code>/tasks today</code> <span class="text-muted">- На сьогодні</span></li>
+                            <li class="mb-2"><code>/tasks overdue</code> <span class="text-muted">- Прострочені</span></li>
+                            <li class="mb-2"><code>/tasks upcoming</code> <span class="text-muted">- Майбутні</span></li>
+                            <li class="mb-2"><code>/create Назва | Опис</code> <span class="text-muted">- Створити</span></li>
+                            <li class="mb-2"><code>/find ID</code> <span class="text-muted">- Знайти за ID</span></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-edit me-2 text-telegram"></i>Редагування</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><code>/edit #ID title ...</code> <span class="text-muted">- Змінити назву</span></li>
+                            <li class="mb-2"><code>/edit #ID due 2024-12-31</code> <span class="text-muted">- Змінити дедлайн</span></li>
+                            <li class="mb-2"><code>/edit #ID status ...</code> <span class="text-muted">- Змінити статус</span></li>
+                            <li class="mb-2"><code>/complete #ID</code> <span class="text-muted">- Завершити</span></li>
+                            <li class="mb-2"><code>/delete #ID</code> <span class="text-muted">- Видалити</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-bell me-2 text-telegram"></i>Нагадування</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><code>/remind #ID HH:mm</code> <span class="text-muted">- Нагадати</span></li>
+                            <li class="mb-2"><code>/remind #ID 09:00 daily</code> <span class="text-muted">- Щодня</span></li>
+                            <li class="mb-2"><code>/remind #ID 10:00 weekly</code> <span class="text-muted">- Щотижня</span></li>
+                            <li class="mb-2"><code>/reminders</code> <span class="text-muted">- Мої нагадування</span></li>
+                            <li class="mb-2"><code>/unremind ID</code> <span class="text-muted">- Видалити</span></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-list me-2 text-telegram"></i>Списки та інше</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><code>/lists</code> <span class="text-muted">- Мої списки</span></li>
+                            <li class="mb-2"><code>/start</code> <span class="text-muted">- Початок (показує кнопки)</span></li>
+                            <li class="mb-2"><code>/help</code> <span class="text-muted">- Допомога</span></li>
+                            <li class="mb-2"><code>/link API_KEY</code> <span class="text-muted">- Зв'язати акаунт</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Порада:</strong> Натисніть /start в боті - з'явиться панель з кнопками для зручного керування!
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрити</button>
+                <button type="button" class="btn btn-telegram" data-bs-dismiss="modal">Закрити</button>
             </div>
         </div>
     </div>
@@ -216,21 +365,55 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Показати команди бота
-    function showBotCommands() {
-        var modal = new bootstrap.Modal(document.getElementById('botCommandsModal'));
+    // Показати інформацію про кнопку
+    function showBotInfo(buttonName) {
+        const messages = {
+            'Всі': 'Покаже всі ваші активні завдання',
+            'Сьогодні': 'Покаже завдання з дедлайном на сьогодні',
+            'Прострочені': 'Покаже завдання, які вже прострочені',
+            'Майбутні': 'Покаже майбутні завдання',
+            'Нове завдання': 'Для створення використовуйте:\n<code>/create Назва | Опис | 2024-12-31</code>',
+            'Мої списки': 'Покаже всі ваші списки завдань',
+            'Знайти за ID': 'Для пошуку введіть:\n<code>/find 15</code>',
+            'Мої нагадування': 'Покаже всі ваші активні нагадування'
+        };
+
+        const message = messages[buttonName] || 'Натисніть цю кнопку в Telegram боті';
+        alert(`🔄 ${buttonName}\n\n${message}`);
+    }
+
+    // Показати всі команди
+    function showAllCommands() {
+        var modal = new bootstrap.Modal(document.getElementById('allCommandsModal'));
         modal.show();
     }
-    
-    // Динамічно генеруємо QR код (можна додати реальну URL)
+
+    // Додаємо стиль для кнопки
     document.addEventListener('DOMContentLoaded', function() {
-        // Можна додати реальний QR код
-        // var qrContainer = document.querySelector('.qr-code');
-        // qrContainer.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://t.me/your_bot" alt="Telegram Bot QR">';
-        
-        // Встановлюємо ім'я бота
-        document.querySelectorAll('.telegram-section strong').forEach(el => {
-            el.textContent = '@todo_listik_bot'; // Замініть на реальне ім'я
+        const style = document.createElement('style');
+        style.textContent = `
+            .btn-outline-telegram {
+                color: #0088cc;
+                border-color: #0088cc;
+            }
+            .btn-outline-telegram:hover {
+                background-color: #0088cc;
+                color: white;
+            }
+            .bg-telegram {
+                background: linear-gradient(135deg, #0088cc, #40b3e0) !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Анімація кнопок
+        document.querySelectorAll('.bot-btn').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
         });
     });
 </script>

@@ -24,6 +24,7 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddHttpContextAccessor();
+// WebApp Program.cs
 
 builder.Services.AddHttpClient<IApiClient, ApiClient>(client =>
 {
